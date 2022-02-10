@@ -1,5 +1,7 @@
 package com.codewizards;
 
+import com.codewizards.client.ClientHandler;
+import com.codewizards.server.ServerHandler;
 import oracle.jrockit.jfr.StringConstantPool;
 
 import java.io.*;
@@ -16,7 +18,40 @@ public class Main {
         SERVER_ID = args[0];
         SERVER_CONF = args[1];
 
-        int[] portDetails = getServerConfiguration();
+        final int[] portDetails = getServerConfiguration();
+
+        // listen to server connections
+        final ServerSocket serverSocket = new ServerSocket(portDetails[1]);
+        Thread serverThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(true){
+                    try {
+                        Socket socket = serverSocket.accept();
+                        System.out.println("Server Connected.....");
+                        ServerHandler serverHandler = new ServerHandler(socket);
+                        serverHandler.start();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        serverThread.start();
+
+
+        // listen to client connections
+        ServerSocket clientSocket = new ServerSocket(portDetails[0]);
+        while(true){
+            try {
+                Socket socket = clientSocket.accept();
+                System.out.println("Client Connected.....");
+                ClientHandler clientHandler = new ClientHandler(socket);
+                clientHandler.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
     }
 
