@@ -10,8 +10,8 @@ import java.net.Socket;
 
 public class Main {
 
-    private static String SERVER_ID;
-    private static String SERVER_CONF;
+    public static String SERVER_ID;
+    public static String SERVER_CONF;
 
     public static void main(String[] args) throws IOException {
 
