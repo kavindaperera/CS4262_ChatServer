@@ -1,4 +1,4 @@
 package com.codewizards.consensus;
 
-public class FastBullyAlgorithm {
+public class FBA {
 }

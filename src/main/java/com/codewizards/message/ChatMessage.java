@@ -1,10 +1,10 @@
-package com.codewizards.messaging;
+package com.codewizards.message;
 
 import org.json.simple.JSONObject;
 
 import java.util.List;
 
-public class Message {
+public class ChatMessage {
 
     public static JSONObject getAllowNewIdentityResponse(String approve){
         JSONObject allowIdentity = new JSONObject();

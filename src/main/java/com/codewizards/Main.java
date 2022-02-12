@@ -2,7 +2,6 @@ package com.codewizards;
 
 import com.codewizards.client.ClientHandler;
 import com.codewizards.server.ServerHandler;
-import oracle.jrockit.jfr.StringConstantPool;
 
 import java.io.*;
 import java.net.ServerSocket;
