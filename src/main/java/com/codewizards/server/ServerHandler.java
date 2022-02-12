@@ -1,5 +1,6 @@
 package com.codewizards.server;
 
+import lombok.NonNull;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -15,7 +16,7 @@ public class ServerHandler extends Thread{
     private MessageHandler messageHandler;
     private JSONParser parser;
 
-    public ServerHandler(Socket serverSocket) {
+    public ServerHandler(@NonNull Socket serverSocket) {
         this.serverSocket = serverSocket;
         this.messageHandler = new MessageHandler();
         this.parser = new JSONParser();
