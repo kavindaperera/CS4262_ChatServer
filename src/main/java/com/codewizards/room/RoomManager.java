@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class RoomManager {
 
+    public static String MAINHALL_ID;
     private static ArrayList<String> globalRoomsList = new ArrayList<>();
     private static ConcurrentHashMap<String, Room> localRoomsList = new ConcurrentHashMap<>();
 
@@ -18,6 +19,7 @@ public class RoomManager {
      * @param roomId
      */
     public static void createMainHall(@NonNull String roomId) {
+        MAINHALL_ID = roomId;
         Room mainHall = new Room(roomId);
         localRoomsList.put(roomId, mainHall);
         globalRoomsList.add(roomId);

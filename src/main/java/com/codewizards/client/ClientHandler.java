@@ -18,7 +18,7 @@ import java.net.Socket;
 
 public class ClientHandler extends Thread{
 
-    public static Logger logger = Logger.getLogger(ServerHandler.class.getName());
+    public static Logger logger = Logger.getLogger(ClientHandler.class.getName());
 
     private final Socket clientSocket;
     private MessageHandler messageHandler;
@@ -51,10 +51,10 @@ public class ClientHandler extends Thread{
                         writer.write((response.toJSONString() + "\n").getBytes("UTF-8"));
 
                         if (response.get("approved").toString().equalsIgnoreCase("true")) {
-                            JSONObject broadcast = ClientMessage.getRoomChangeBroadcast(receivedMessage.get("identity").toString(), "", "MainHall-s3");
+                            JSONObject broadcast = ClientMessage.getRoomChangeBroadcast(receivedMessage.get("identity").toString(), "", RoomManager.MAINHALL_ID);
 
                             writer.write((broadcast.toJSONString() + "\n").getBytes("UTF-8"));
-                            RoomManager.broadcastToChatRoom("MainHall-s3", broadcast.toJSONString());
+                            RoomManager.broadcastToChatRoom(RoomManager.MAINHALL_ID, broadcast.toJSONString());
                         }
                         writer.flush();
                         break;
