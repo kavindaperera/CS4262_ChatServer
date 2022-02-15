@@ -1,6 +1,7 @@
 package com.codewizards.server;
 
 import lombok.NonNull;
+import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -11,6 +12,8 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 
 public class ServerHandler extends Thread{
+
+    public static Logger logger = Logger.getLogger(ServerHandler.class.getName());
 
     private final Socket serverSocket;
     private MessageHandler messageHandler;
@@ -63,9 +66,9 @@ public class ServerHandler extends Thread{
                 }
             }
         } catch (ParseException e) {
-            System.out.println("Message Error: " + e.getMessage());
+            logger.error("Message Error: " + e.getMessage());
         } catch (IOException e) {
-            System.out.println("Communication Error: " + e.getMessage());
+            logger.error("Communication Error: " + e.getMessage());
         }
     }
 }

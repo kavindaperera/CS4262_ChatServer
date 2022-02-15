@@ -1,3 +1,4 @@
 target/
 .idea/
 ChatServer.iml
+application.log

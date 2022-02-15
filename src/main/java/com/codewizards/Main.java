@@ -3,12 +3,16 @@ package com.codewizards;
 import com.codewizards.client.ClientHandler;
 import com.codewizards.room.RoomManager;
 import com.codewizards.server.ServerHandler;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Main {
+
+    public static Logger logger = null;
 
     public static String SERVER_ID;
     public static String SERVER_CONF;
@@ -18,8 +22,12 @@ public class Main {
         SERVER_ID = args[0];
         SERVER_CONF = args[1];
 
+        loadLog4J(); // initialize log4j
+
         initialize();
         final int[] portDetails = getServerConfiguration();
+
+        logger = Logger.getLogger(Main.class.getName());
 
         // listen to server connections
         final ServerSocket serverSocket = new ServerSocket(portDetails[1]);
@@ -29,7 +37,7 @@ public class Main {
                 while(true){
                     try {
                         Socket socket = serverSocket.accept();
-                        System.out.println("Server Connected.....");
+                        logger.debug("Server Connected.....");
                         ServerHandler serverHandler = new ServerHandler(socket);
                         serverHandler.start();
                     } catch (IOException e) {
@@ -46,7 +54,7 @@ public class Main {
         while(true){
             try {
                 Socket socket = clientSocket.accept();
-                System.out.println("Client Connected.....");
+                logger.debug("Client Connected.....");
                 ClientHandler clientHandler = new ClientHandler(socket);
                 clientHandler.start();
             } catch (IOException e) {
@@ -81,6 +89,11 @@ public class Main {
     private static void initialize() {
         String roomId = "MainHall-" + SERVER_ID;
         RoomManager.createMainHall(roomId);
+    }
+
+    public static void loadLog4J(){
+        String log4j_path = System.getProperty("user.dir") + "/log4j.properties";
+        PropertyConfigurator.configure(log4j_path);
     }
 
 }
