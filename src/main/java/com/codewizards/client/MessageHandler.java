@@ -13,7 +13,7 @@ public class MessageHandler {
 
     }
 
-    public String respondToIdentityRequest(JSONObject receivedMessage) {
+    public JSONObject respondToIdentityRequest(JSONObject receivedMessage) {
         String identity = (String) receivedMessage.get("identity");
         System.out.println("Client requested for identity " + identity);
 
@@ -21,11 +21,7 @@ public class MessageHandler {
 
         JSONObject response = ClientMessage.getAllowNewIdentityResponse("true");
 
-        return response.toJSONString();
-    }
-
-    public void respondToRoomChangeRequest() {
-
+        return response;
     }
 
     public void respondToListRequest() {
@@ -37,6 +33,14 @@ public class MessageHandler {
     }
 
     public void respondToCreateRoomRequest() {
+
+    }
+
+    public void respondToJoinRoomRequest() {
+
+    }
+
+    public void respondToDeleteRoomRequest() {
 
     }
 

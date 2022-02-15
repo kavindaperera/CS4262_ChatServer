@@ -1,5 +1,7 @@
 package com.codewizards.client;
 
+import com.codewizards.message.ClientMessage;
+import com.codewizards.room.RoomManager;
 import lombok.NonNull;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -40,13 +42,16 @@ public class ClientHandler extends Thread{
 
                 switch (type) {
                     case "newidentity": {
-                        String response = this.messageHandler.respondToIdentityRequest(receivedMessage);
-                        writer.write((response + "\n").getBytes("UTF-8"));
+                        JSONObject response = this.messageHandler.respondToIdentityRequest(receivedMessage);
+                        writer.write((response.toJSONString() + "\n").getBytes("UTF-8"));
+
+                        if (response.get("approved").toString().equalsIgnoreCase("true")) {
+                            JSONObject broadcast = ClientMessage.getRoomChangeBroadcast(receivedMessage.get("identity").toString(), "", "MainHall-s3");
+
+                            writer.write((broadcast.toJSONString() + "\n").getBytes("UTF-8"));
+                            RoomManager.broadcastToChatRoom("MainHall-s3", broadcast.toJSONString());
+                        }
                         writer.flush();
-                        break;
-                    }
-                    case "roomchange": {
-                        this.messageHandler.respondToRoomChangeRequest();
                         break;
                     }
                     case "list": {
@@ -59,6 +64,14 @@ public class ClientHandler extends Thread{
                     }
                     case "createroom": {
                         this.messageHandler.respondToCreateRoomRequest();
+                        break;
+                    }
+                    case "joinroom": {
+                        this.messageHandler.respondToJoinRoomRequest();
+                        break;
+                    }
+                    case "deleteroom": {
+                        this.messageHandler.respondToDeleteRoomRequest();
                         break;
                     }
 
