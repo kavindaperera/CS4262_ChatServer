@@ -1,6 +1,7 @@
 package com.codewizards;
 
 import com.codewizards.client.ClientHandler;
+import com.codewizards.room.RoomManager;
 import com.codewizards.server.ServerHandler;
 
 import java.io.*;
@@ -17,6 +18,7 @@ public class Main {
         SERVER_ID = args[0];
         SERVER_CONF = args[1];
 
+        initialize();
         final int[] portDetails = getServerConfiguration();
 
         // listen to server connections
@@ -74,6 +76,11 @@ public class Main {
         }
 
         return portDetails;
+    }
+
+    private static void initialize() {
+        String roomId = "MainHall-" + SERVER_ID;
+        RoomManager.createMainHall(roomId);
     }
 
 }
