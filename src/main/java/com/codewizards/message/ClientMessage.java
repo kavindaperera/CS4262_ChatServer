@@ -6,7 +6,7 @@ import org.json.simple.JSONObject;
 import java.util.List;
 
 
-public class ChatMessage {
+public class ClientMessage {
 
     @SuppressWarnings("unchecked")
     public static JSONObject getAllowNewIdentityResponse(@NonNull String approve) {

@@ -1,6 +1,6 @@
 package com.codewizards.client;
 
-import com.codewizards.message.ChatMessage;
+import com.codewizards.message.ClientMessage;
 import org.json.simple.JSONObject;
 
 public class MessageHandler {
@@ -19,7 +19,7 @@ public class MessageHandler {
 
         // check with leader for the availability and send response
 
-        JSONObject response = ChatMessage.getAllowNewIdentityResponse("true");
+        JSONObject response = ClientMessage.getAllowNewIdentityResponse("true");
 
         return response.toJSONString();
     }
