@@ -1,5 +1,7 @@
 package com.codewizards.room;
 
+import lombok.NonNull;
+
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,19 +14,30 @@ public class RoomManager {
 
     }
 
-    public static void createMainHall(String roomId) {
+    /**
+     * @param roomId
+     */
+    public static void createMainHall(@NonNull String roomId) {
         Room mainHall = new Room(roomId);
         localRoomsList.put(roomId, mainHall);
         globalRoomsList.add(roomId);
     }
 
-    public void createChatRoom(String roomId, String clientId) {
+    /**
+     * @param roomId
+     * @param clientId
+     */
+    public void createChatRoom(@NonNull String roomId, @NonNull String clientId) {
         Room chatRoom = new Room(roomId, clientId);
         localRoomsList.put(roomId, chatRoom);
         globalRoomsList.add(roomId);
     }
 
-    public static void broadcastToChatRoom(String roomId, String message) {
+    /**
+     * @param roomId Room Identifier
+     * @param message
+     */
+    public static void broadcastToChatRoom(@NonNull String roomId, @NonNull String message) {
         Room room = localRoomsList.get(roomId);
         room.sendBroadcast(message);
     }
