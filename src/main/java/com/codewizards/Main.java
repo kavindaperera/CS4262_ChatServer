@@ -88,7 +88,7 @@ public class Main {
 
     private static void initialize() {
         String roomId = "MainHall-" + SERVER_ID;
-        RoomManager.createMainHall(roomId);
+        RoomManager.createChatRoom(roomId, "");
     }
 
     public static void loadLog4J(){

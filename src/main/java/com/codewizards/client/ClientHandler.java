@@ -20,7 +20,7 @@ public class ClientHandler extends Thread{
 
     public static Logger logger = Logger.getLogger(ClientHandler.class.getName());
 
-    private String clientId;
+    private ClientState clientState;
     private final Socket clientSocket;
     private MessageHandler messageHandler;
     private JSONParser parser;
@@ -53,12 +53,13 @@ public class ClientHandler extends Thread{
 
                         if (response.get("approved").toString().equalsIgnoreCase("true")) {
 
-                            this.clientId = receivedMessage.get("identity").toString();  // setting the clientId after it has been approved
+                            this.clientState = new ClientState(RoomManager.MAINHALL_ID, receivedMessage.get("identity").toString(), clientSocket);
+                            RoomManager.getLocalRoomsList().get(RoomManager.MAINHALL_ID).getClientHashMap().put(receivedMessage.get("identity").toString(), this.clientState);
 
                             JSONObject broadcast = ClientMessage.getRoomChangeBroadcast(receivedMessage.get("identity").toString(), "", RoomManager.MAINHALL_ID);
                             writer.write((broadcast.toJSONString() + "\n").getBytes("UTF-8"));
 
-                            RoomManager.broadcastToChatRoom(RoomManager.MAINHALL_ID, broadcast.toJSONString());
+                            RoomManager.broadcastToChatRoom(clientState.getRoomId(), clientState.getClientId(), broadcast.toJSONString());
                         }
                         writer.flush();
                         break;
@@ -88,8 +89,8 @@ public class ClientHandler extends Thread{
                         break;
                     }
                     case "message": {
-                        JSONObject broadcastMessage = this.messageHandler.respondToReceivedMessage(receivedMessage, this.clientId);
-                        RoomManager.broadcastToChatRoom(RoomManager.MAINHALL_ID, broadcastMessage.toJSONString());
+                        JSONObject broadcastMessage = this.messageHandler.respondToReceivedMessage(receivedMessage, clientState.getClientId());
+                        RoomManager.broadcastToChatRoom(clientState.getRoomId(), clientState.getClientId(), broadcastMessage.toJSONString());
                         break;
                     }
                 }

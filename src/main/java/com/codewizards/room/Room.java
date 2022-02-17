@@ -18,7 +18,7 @@ public class Room {
 
 
     /**
-     * used to create other ChatRooms
+     * used to create ChatRooms
      * @param roomId
      * @param creatorId
      */
@@ -27,27 +27,29 @@ public class Room {
         this.creatorId = creatorId;
     }
 
-    /**
-     * used to create MainHall
-     * @param roomId
-     */
-    public Room(@NonNull String roomId) {
-        this.roomId = roomId;
+    public HashMap<String, ClientState> getClientHashMap() {
+        return clientHashMap;
     }
 
     /**
+     * @param sender
      * @param message
      */
-    public void sendBroadcast(String message) {
-        Iterator<ClientState> clientList = clientHashMap.values().iterator();
+    public void sendBroadcast(String sender, String message) {
+        Iterator<String> clientList = clientHashMap.keySet().iterator();
         DataOutputStream writer;
+        String clientId;
+        ClientState clientState;
         while (clientList.hasNext()) {
             try {
-                ClientState clientState = clientList.next();
-                writer = new DataOutputStream(clientState.getSocket().getOutputStream());
-                writer.write((message + "\n").getBytes("UTF-8"));
-                writer.flush();
-                writer = null;
+                clientId = clientList.next();
+                if (!clientId.equalsIgnoreCase(sender)) {
+                    clientState = clientHashMap.get(clientId);
+                    writer = new DataOutputStream(clientState.getSocket().getOutputStream());
+                    writer.write((message + "\n").getBytes("UTF-8"));
+                    writer.flush();
+                    writer = null;
+                }
             } catch (IOException e) {
                 System.out.println("Communication Error: " + e.getMessage());
             }
