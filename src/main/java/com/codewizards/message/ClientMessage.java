@@ -60,4 +60,12 @@ public class ClientMessage {
         return deleteRoom;
     }
 
+    @SuppressWarnings("unchecked")
+    public static JSONObject getMessageBroadcast(@NonNull String identity, @NonNull String content) {
+        JSONObject broadcastMessage = new JSONObject();
+        broadcastMessage.put("type", "message");
+        broadcastMessage.put("identity", identity);
+        broadcastMessage.put("content", content);
+        return broadcastMessage;
+    }
 }

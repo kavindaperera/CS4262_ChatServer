@@ -48,4 +48,17 @@ public class MessageHandler {
 
     }
 
+    public void respondToQuitRequest() {
+
+    }
+
+    public JSONObject respondToReceivedMessage(JSONObject receivedMessage, String clientId) {
+        String content = (String) receivedMessage.get("content");
+        logger.info(clientId + " sent message => " + content);
+
+        JSONObject broadcastMessage = ClientMessage.getMessageBroadcast(clientId, content);
+
+        return broadcastMessage;
+    }
+
 }
