@@ -17,19 +17,12 @@ public class RoomManager {
 
     /**
      * @param roomId
-     */
-    public static void createMainHall(@NonNull String roomId) {
-        MAINHALL_ID = roomId;
-        Room mainHall = new Room(roomId);
-        localRoomsList.put(roomId, mainHall);
-        globalRoomsList.add(roomId);
-    }
-
-    /**
-     * @param roomId
      * @param clientId
      */
-    public void createChatRoom(@NonNull String roomId, @NonNull String clientId) {
+    public static void createChatRoom(@NonNull String roomId, @NonNull String clientId) {
+        if (clientId.equalsIgnoreCase("")){
+            MAINHALL_ID = roomId;
+        }
         Room chatRoom = new Room(roomId, clientId);
         localRoomsList.put(roomId, chatRoom);
         globalRoomsList.add(roomId);
@@ -39,9 +32,12 @@ public class RoomManager {
      * @param roomId Room Identifier
      * @param message
      */
-    public static void broadcastToChatRoom(@NonNull String roomId, @NonNull String message) {
+    public static void broadcastToChatRoom(@NonNull String roomId, @NonNull String sender, @NonNull String message) {
         Room room = localRoomsList.get(roomId);
-        room.sendBroadcast(message);
+        room.sendBroadcast(sender, message);
     }
 
+    public static ConcurrentHashMap<String, Room> getLocalRoomsList() {
+        return localRoomsList;
+    }
 }
