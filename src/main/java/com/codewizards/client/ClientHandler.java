@@ -20,6 +20,7 @@ public class ClientHandler extends Thread{
 
     public static Logger logger = Logger.getLogger(ClientHandler.class.getName());
 
+    private String clientId;
     private final Socket clientSocket;
     private MessageHandler messageHandler;
     private JSONParser parser;
@@ -51,9 +52,12 @@ public class ClientHandler extends Thread{
                         writer.write((response.toJSONString() + "\n").getBytes("UTF-8"));
 
                         if (response.get("approved").toString().equalsIgnoreCase("true")) {
-                            JSONObject broadcast = ClientMessage.getRoomChangeBroadcast(receivedMessage.get("identity").toString(), "", RoomManager.MAINHALL_ID);
 
+                            this.clientId = receivedMessage.get("identity").toString();  // setting the clientId after it has been approved
+
+                            JSONObject broadcast = ClientMessage.getRoomChangeBroadcast(receivedMessage.get("identity").toString(), "", RoomManager.MAINHALL_ID);
                             writer.write((broadcast.toJSONString() + "\n").getBytes("UTF-8"));
+
                             RoomManager.broadcastToChatRoom(RoomManager.MAINHALL_ID, broadcast.toJSONString());
                         }
                         writer.flush();
@@ -79,7 +83,15 @@ public class ClientHandler extends Thread{
                         this.messageHandler.respondToDeleteRoomRequest();
                         break;
                     }
-
+                    case "quit": {
+                        this.messageHandler.respondToQuitRequest();
+                        break;
+                    }
+                    case "message": {
+                        JSONObject broadcastMessage = this.messageHandler.respondToReceivedMessage(receivedMessage, this.clientId);
+                        RoomManager.broadcastToChatRoom(RoomManager.MAINHALL_ID, broadcastMessage.toJSONString());
+                        break;
+                    }
                 }
             }
         } catch (ParseException e) {
