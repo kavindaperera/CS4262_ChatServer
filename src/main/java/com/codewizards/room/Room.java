@@ -3,7 +3,10 @@ package com.codewizards.room;
 import com.codewizards.client.ClientState;
 import lombok.NonNull;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class Room {
 
@@ -36,7 +39,19 @@ public class Room {
      * @param message
      */
     public void sendBroadcast(String message) {
-
+        Iterator<ClientState> clientList = clientHashMap.values().iterator();
+        DataOutputStream writer;
+        while (clientList.hasNext()) {
+            try {
+                ClientState clientState = clientList.next();
+                writer = new DataOutputStream(clientState.getSocket().getOutputStream());
+                writer.write((message + "\n").getBytes("UTF-8"));
+                writer.flush();
+                writer = null;
+            } catch (IOException e) {
+                System.out.println("Communication Error: " + e.getMessage());
+            }
+        }
     }
 
 }
