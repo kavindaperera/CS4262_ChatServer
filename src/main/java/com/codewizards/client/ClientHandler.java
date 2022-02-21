@@ -65,7 +65,9 @@ public class ClientHandler extends Thread{
                         break;
                     }
                     case "list": {
-                        this.messageHandler.respondToListRequest();
+                        JSONObject response = this.messageHandler.respondToListRequest();
+                        writer.write((response.toJSONString() + "\n").getBytes("UTF-8"));
+                        writer.flush();
                         break;
                     }
                     case "who": {

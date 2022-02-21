@@ -1,9 +1,13 @@
 package com.codewizards.client;
 
 import com.codewizards.message.ClientMessage;
+import com.codewizards.room.RoomManager;
 import com.codewizards.server.ServerHandler;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
+
+import java.util.List;
+
 
 public class MessageHandler {
 
@@ -28,8 +32,11 @@ public class MessageHandler {
         return response;
     }
 
-    public void respondToListRequest() {
+    public JSONObject respondToListRequest() {
+        List<String> globalRoomsList = RoomManager.getGlobalRoomsList();
+        JSONObject response = ClientMessage.getListResponse(globalRoomsList);
 
+        return response;
     }
 
     public void respondToWhoRequest() {
