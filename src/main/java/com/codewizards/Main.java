@@ -9,6 +9,9 @@ import org.apache.log4j.PropertyConfigurator;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 public class Main {
 
@@ -16,6 +19,7 @@ public class Main {
 
     public static String SERVER_ID;
     public static String SERVER_CONF;
+    public static HashMap<String, List<String>> serverConfigs = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
 
@@ -25,12 +29,11 @@ public class Main {
         loadLog4J(); // initialize log4j
 
         initialize();
-        final int[] portDetails = getServerConfiguration();
 
         logger = Logger.getLogger(Main.class.getName());
 
         // listen to server connections
-        final ServerSocket serverSocket = new ServerSocket(portDetails[1]);
+        final ServerSocket serverSocket = new ServerSocket(Integer.parseInt(serverConfigs.get(SERVER_ID).get(3)));
         Thread serverThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -50,7 +53,7 @@ public class Main {
 
 
         // listen to client connections
-        ServerSocket clientSocket = new ServerSocket(portDetails[0]);
+        ServerSocket clientSocket = new ServerSocket(Integer.parseInt(serverConfigs.get(SERVER_ID).get(2)));
         while(true){
             try {
                 Socket socket = clientSocket.accept();
@@ -64,29 +67,23 @@ public class Main {
 
     }
 
-    private static int[] getServerConfiguration() {
-
-        int[] portDetails = new int[2]; // index 0 for client port & index 1 for server port
+    private static void getServerConfigurations() {
         try {
             BufferedReader reader = new BufferedReader(new FileReader(SERVER_CONF));
 
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] details = line.split("\t");
-                if (details[0].equalsIgnoreCase(SERVER_ID)) {
-                    portDetails[0] = Integer.parseInt(details[2]);
-                    portDetails[1] = Integer.parseInt(details[3]);
-                    break;
-                }
+                serverConfigs.put(details[0], Arrays.asList(details));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return portDetails;
     }
 
     private static void initialize() {
+        getServerConfigurations();
+        RoomManager.initializeGlobalRoomsList();
         String roomId = "MainHall-" + SERVER_ID;
         RoomManager.createChatRoom(roomId, "");
     }
