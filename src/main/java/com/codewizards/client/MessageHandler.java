@@ -2,7 +2,6 @@ package com.codewizards.client;
 
 import com.codewizards.message.ClientMessage;
 import com.codewizards.room.RoomManager;
-import com.codewizards.server.ServerHandler;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 
@@ -11,7 +10,7 @@ import java.util.List;
 
 public class MessageHandler {
 
-    public static Logger logger = Logger.getLogger(ServerHandler.class.getName());
+    public static Logger logger = Logger.getLogger(MessageHandler.class.getName());
 
     //createRoom
 

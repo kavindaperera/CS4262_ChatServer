@@ -1,13 +1,14 @@
 package com.codewizards.server;
 
 import lombok.Getter;
+import lombok.NonNull;
 import org.apache.log4j.Logger;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerState {
 
-    public static Logger logger = Logger.getLogger(ServerHandler.class.getName());
+    public static Logger logger = Logger.getLogger(ServerState.class.getName());
 
     private static ServerState INSTANCE;
 
@@ -26,7 +27,7 @@ public class ServerState {
 
     }
 
-    public synchronized void addServerToServerList(Server server, String ownId){
+    public synchronized void addServerToServerList(@NonNull Server server, @NonNull String ownId){
         if (server.getServerId().equalsIgnoreCase(ownId)){
             logger.info("Own Server added: " + server.toString());
             this.ownServer = server;
