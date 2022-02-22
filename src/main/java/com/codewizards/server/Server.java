@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
-public class Server {
+public class Server implements Comparable{
 
     @Getter @Setter
     private String serverId;
@@ -33,5 +33,14 @@ public class Server {
                 ", clientPort=" + clientPort +
                 ", coordinationPort=" + coordinationPort +
                 '}';
+    }
+
+
+    @Override
+    public int compareTo(Object o) {
+        if (o instanceof Server) {
+            return Integer.parseInt(serverId.substring(1)) - Integer.parseInt(((Server) o).getServerId().substring(1));
+        }
+        throw new IllegalArgumentException(o.getClass().getName() + " is not a " + this.getClass().getName());
     }
 }

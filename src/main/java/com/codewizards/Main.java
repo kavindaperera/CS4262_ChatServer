@@ -1,6 +1,7 @@
 package com.codewizards;
 
 import com.codewizards.client.ClientHandler;
+import com.codewizards.consensus.FastBully;
 import com.codewizards.room.RoomManager;
 import com.codewizards.server.Server;
 import com.codewizards.server.ServerHandler;
@@ -60,6 +61,8 @@ public class Main {
         });
 
         serverThread.start();
+
+        FastBully.getInstance().startElection();
 
         // listen to client connections
         ServerSocket clientSocket = new ServerSocket(ServerState.getInstance().getOwnServer().getClientPort());
