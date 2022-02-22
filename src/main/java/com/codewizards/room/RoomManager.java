@@ -34,7 +34,7 @@ public class RoomManager {
         }
         Room chatRoom = new Room(roomId, clientId);
         localRoomsList.put(roomId, chatRoom);
-        globalRoomsList.put(roomId, Main.SERVER_ID);
+        globalRoomsList.put(roomId, ServerState.getInstance().getOwnServer().getServerId());
     }
 
     /**
