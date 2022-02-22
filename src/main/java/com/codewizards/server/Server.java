@@ -23,4 +23,14 @@ public class Server {
         this.clientPort = clientPort;
         this.coordinationPort = coordinationPort;
     }
+
+    @Override
+    public String toString() {
+        return "Server{" +
+                "serverId='" + serverId + '\'' +
+                ", serverAddress='" + serverAddress + '\'' +
+                ", clientPort=" + clientPort +
+                ", coordinationPort=" + coordinationPort +
+                '}';
+    }
 }

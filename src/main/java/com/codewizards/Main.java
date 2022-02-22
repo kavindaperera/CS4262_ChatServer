@@ -2,16 +2,17 @@ package com.codewizards;
 
 import com.codewizards.client.ClientHandler;
 import com.codewizards.room.RoomManager;
+import com.codewizards.server.Server;
 import com.codewizards.server.ServerHandler;
+import com.codewizards.server.ServerState;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 
 public class Main {
 
@@ -19,21 +20,29 @@ public class Main {
 
     public static String SERVER_ID;
     public static String SERVER_CONF;
-    public static HashMap<String, List<String>> serverConfigs = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
 
-        SERVER_ID = args[0];
-        SERVER_CONF = args[1];
+        // initialize log4j
+        loadLog4J();
+        logger = Logger.getLogger(Main.class.getName());
 
-        loadLog4J(); // initialize log4j
+        //load command line args
+        CmdLineValues values = new CmdLineValues();
+        CmdLineParser parser = new CmdLineParser(values);
+
+        try {
+            parser.parseArgument(args);
+            SERVER_ID = values.getServerId();
+            SERVER_CONF = values.getServersConf();
+        } catch (CmdLineException e) {
+            logger.error("Error while parsing cmd line arguments: " + e.getLocalizedMessage());
+        }
 
         initialize();
 
-        logger = Logger.getLogger(Main.class.getName());
-
         // listen to server connections
-        final ServerSocket serverSocket = new ServerSocket(Integer.parseInt(serverConfigs.get(SERVER_ID).get(3)));
+        final ServerSocket serverSocket = new ServerSocket(ServerState.getInstance().getOwnServer().getCoordinationPort());
         Thread serverThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -49,11 +58,11 @@ public class Main {
                 }
             }
         });
+
         serverThread.start();
 
-
         // listen to client connections
-        ServerSocket clientSocket = new ServerSocket(Integer.parseInt(serverConfigs.get(SERVER_ID).get(2)));
+        ServerSocket clientSocket = new ServerSocket(ServerState.getInstance().getOwnServer().getClientPort());
         while(true){
             try {
                 Socket socket = clientSocket.accept();
@@ -64,17 +73,16 @@ public class Main {
                 e.printStackTrace();
             }
         }
-
     }
 
     private static void getServerConfigurations() {
         try {
             BufferedReader reader = new BufferedReader(new FileReader(SERVER_CONF));
-
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] details = line.split("\t");
-                serverConfigs.put(details[0], Arrays.asList(details));
+                Server server = new Server(details[0], details[1], Integer.parseInt(details[2]), Integer.parseInt(details[3]));
+                ServerState.getInstance().addServerToServerList(server, SERVER_ID);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -84,8 +92,8 @@ public class Main {
     private static void initialize() {
         getServerConfigurations();
         RoomManager.initializeGlobalRoomsList();
-        String roomId = "MainHall-" + SERVER_ID;
-        RoomManager.createChatRoom(roomId, "");
+        String mainHallId = "MainHall-" + SERVER_ID;
+        RoomManager.createChatRoom(mainHallId, "");
     }
 
     public static void loadLog4J(){
