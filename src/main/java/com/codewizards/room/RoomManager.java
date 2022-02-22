@@ -1,7 +1,6 @@
 package com.codewizards.room;
 
 import com.codewizards.Main;
-import com.codewizards.server.ServerHandler;
 import com.codewizards.server.ServerState;
 import lombok.NonNull;
 import org.apache.log4j.Logger;
@@ -13,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class RoomManager {
 
-    public static Logger logger = Logger.getLogger(ServerHandler.class.getName());
+    public static Logger logger = Logger.getLogger(RoomManager.class.getName());
 
     public static String MAINHALL_ID;
 
@@ -26,8 +25,8 @@ public class RoomManager {
     }
 
     /**
-     * @param roomId
-     * @param clientId
+     * @param roomId unique room identity
+     * @param clientId client identity
      */
     public static void createChatRoom(@NonNull String roomId, @NonNull String clientId) {
         if (clientId.equalsIgnoreCase("")){
@@ -39,8 +38,9 @@ public class RoomManager {
     }
 
     /**
-     * @param roomId Room Identifier
-     * @param message
+     * @param roomId unique room identity
+     * @param sender sender identity
+     * @param message message
      */
     public static void broadcastToChatRoom(@NonNull String roomId, @NonNull String sender, @NonNull String message) {
         Room room = localRoomsList.get(roomId);
