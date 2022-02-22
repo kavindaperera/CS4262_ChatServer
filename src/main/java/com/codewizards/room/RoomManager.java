@@ -1,7 +1,10 @@
 package com.codewizards.room;
 
 import com.codewizards.Main;
+import com.codewizards.server.ServerHandler;
+import com.codewizards.server.ServerState;
 import lombok.NonNull;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -10,8 +13,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class RoomManager {
 
+    public static Logger logger = Logger.getLogger(ServerHandler.class.getName());
+
     public static String MAINHALL_ID;
+
     private static ConcurrentHashMap<String, String> globalRoomsList = new ConcurrentHashMap<>();
+
     private static ConcurrentHashMap<String, Room> localRoomsList = new ConcurrentHashMap<>();
 
     public RoomManager() {
@@ -44,19 +51,20 @@ public class RoomManager {
         return localRoomsList;
     }
 
-    public static List<String> getGlobalRoomsList(){
+    public static List<String> getGlobalRoomsListAsArrayList(){
         List<String> roomsList = new ArrayList<>();
         roomsList.addAll(globalRoomsList.keySet());
         return roomsList;
     }
 
     public static void initializeGlobalRoomsList() {
-        Iterator<String> serverList = Main.serverConfigs.keySet().iterator();
+        Iterator<String> serverList = ServerState.getInstance().getServerList().keySet().iterator();
         while (serverList.hasNext()) {
             String serverId = serverList.next();
-            if (!serverId.equalsIgnoreCase(Main.SERVER_ID)) {
+            if (!serverId.equalsIgnoreCase(ServerState.getInstance().getOwnServer().getServerId())) {
                 String mainHallId = "MainHall-" + serverId;
                 globalRoomsList.put(mainHallId, serverId);
+                logger.info("Initialized: " + mainHallId);
             }
         }
     }

@@ -16,7 +16,9 @@ public class ServerHandler extends Thread{
     public static Logger logger = Logger.getLogger(ServerHandler.class.getName());
 
     private final Socket serverSocket;
+
     private MessageHandler messageHandler;
+
     private JSONParser parser;
 
     public ServerHandler(@NonNull Socket serverSocket) {

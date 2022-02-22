@@ -33,7 +33,7 @@ public class MessageHandler {
     }
 
     public JSONObject respondToListRequest() {
-        List<String> globalRoomsList = RoomManager.getGlobalRoomsList();
+        List<String> globalRoomsList = RoomManager.getGlobalRoomsListAsArrayList();
         JSONObject response = ClientMessage.getListResponse(globalRoomsList);
 
         return response;
