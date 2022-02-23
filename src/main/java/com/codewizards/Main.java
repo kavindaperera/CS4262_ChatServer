@@ -1,7 +1,7 @@
 package com.codewizards;
 
 import com.codewizards.client.ClientHandler;
-import com.codewizards.consensus.FastBully;
+import com.codewizards.election.FastBully;
 import com.codewizards.room.RoomManager;
 import com.codewizards.server.Server;
 import com.codewizards.server.ServerHandler;
@@ -11,7 +11,9 @@ import org.apache.log4j.PropertyConfigurator;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -47,7 +49,7 @@ public class Main {
         Thread serverThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                while(true){
+                while (true) {
                     try {
                         Socket socket = serverSocket.accept();
                         logger.debug("Server Connected.....");
@@ -62,11 +64,11 @@ public class Main {
 
         serverThread.start();
 
-        FastBully.getInstance().startElection();
+        selectCoordinator(); // bully test
 
         // listen to client connections
         ServerSocket clientSocket = new ServerSocket(ServerState.getInstance().getOwnServer().getClientPort());
-        while(true){
+        while (true) {
             try {
                 Socket socket = clientSocket.accept();
                 logger.debug("Client Connected.....");
@@ -75,6 +77,15 @@ public class Main {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private static void selectCoordinator() throws IOException { // bully test
+        logger.info("Selecting coordinator");
+        if (ServerState.getInstance().getServersWithHigherPriority().isEmpty()){
+            logger.debug("I am the highest priority server");
+        } else {
+            FastBully.getInstance().startElection(ServerState.getInstance().getServersWithHigherPriority());
         }
     }
 
@@ -99,7 +110,7 @@ public class Main {
         RoomManager.createChatRoom(mainHallId, "");
     }
 
-    public static void loadLog4J(){
+    public static void loadLog4J() {
         String log4j_path = System.getProperty("user.dir") + "/log4j.properties";
         PropertyConfigurator.configure(log4j_path);
     }

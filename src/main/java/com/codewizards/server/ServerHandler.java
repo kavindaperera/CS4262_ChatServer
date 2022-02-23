@@ -38,7 +38,7 @@ public class ServerHandler extends Thread{
             while(true) {
                 receivedMessage = (JSONObject) parser.parse(reader.readLine());
                 type = (String) receivedMessage.get("type");
-
+                logger.debug("Received: " + receivedMessage);
                 switch (type) {
                     case "election": {
                         this.messageHandler.respondToElectionMessage();
