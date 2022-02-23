@@ -52,7 +52,7 @@ public class Main {
                 while (true) {
                     try {
                         Socket socket = serverSocket.accept();
-                        logger.debug("Server Connected.....");
+                        logger.info("Server Connected");
                         ServerHandler serverHandler = new ServerHandler(socket);
                         serverHandler.start();
                     } catch (IOException e) {
@@ -80,13 +80,9 @@ public class Main {
         }
     }
 
-    private static void selectCoordinator() throws IOException { // bully test
+    private static void selectCoordinator() {
         logger.info("Selecting coordinator");
-        if (ServerState.getInstance().getServersWithHigherPriority().isEmpty()){
-            logger.debug("I am the highest priority server");
-        } else {
-            FastBully.getInstance().startElection(ServerState.getInstance().getServersWithHigherPriority());
-        }
+        FastBully.getInstance().notifyIamUp(ServerState.getInstance().getServerListAsArrayList());
     }
 
     private static void getServerConfigurations() {

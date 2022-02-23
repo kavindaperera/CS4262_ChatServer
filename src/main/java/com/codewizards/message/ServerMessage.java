@@ -48,7 +48,7 @@ public class ServerMessage {
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject getViewMessage(@NonNull String serverId, @NonNull List<String> processesList) {
+    public static JSONObject getViewMessage(@NonNull String serverId, List<String> processesList) {
         JSONObject view = new JSONObject();
         view.put("type", "view");
         view.put("serverId", serverId);

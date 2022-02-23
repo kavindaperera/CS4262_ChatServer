@@ -33,12 +33,14 @@ public class ServerHandler extends Thread{
             BufferedReader reader = new BufferedReader(new InputStreamReader(
                     serverSocket.getInputStream(), "UTF-8"));
 
-            JSONObject receivedMessage;
+            JSONObject message;
             String type;
+            Server server;
             while(true) {
-                receivedMessage = (JSONObject) parser.parse(reader.readLine());
-                type = (String) receivedMessage.get("type");
-                logger.debug("Received: " + receivedMessage);
+                message = (JSONObject) parser.parse(reader.readLine());
+                type = (String) message.get("type");
+                server = ServerState.getInstance().getServerByServerId((String)message.get("serverId"));
+                logger.debug("Received: " + message);
                 switch (type) {
                     case "election": {
                         this.messageHandler.respondToElectionMessage();
@@ -57,11 +59,11 @@ public class ServerHandler extends Thread{
                         break;
                     }
                     case "IamUp": {
-                        this.messageHandler.respondToIamUpMessage();
+                        this.messageHandler.respondToIamUpMessage(server);
                         break;
                     }
                     case "view": {
-                        this.messageHandler.respondToViewMessage();
+                        this.messageHandler.respondToViewMessage(server);
                         break;
                     }
 
