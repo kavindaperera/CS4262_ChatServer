@@ -21,10 +21,15 @@ public class ClientHandler extends Thread{
     public static Logger logger = Logger.getLogger(ClientHandler.class.getName());
 
     private ClientState clientState;
+
     private final Socket clientSocket;
+
     private MessageHandler messageHandler;
+
     private JSONParser parser;
+
     private DataOutputStream writer;
+
     private BufferedReader reader;
 
     public ClientHandler(@NonNull Socket clientSocket) {

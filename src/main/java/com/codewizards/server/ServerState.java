@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.apache.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerState {
@@ -12,9 +15,15 @@ public class ServerState {
 
     private static ServerState INSTANCE;
 
-    @Getter private Server ownServer;
+    @Getter
+    private final ConcurrentHashMap<String, Server> serverList = new ConcurrentHashMap<>();
 
-    @Getter private final ConcurrentHashMap<String, Server> serverList = new ConcurrentHashMap<>();
+    @Getter
+    private Server ownServer;
+
+    private ServerState() {
+
+    }
 
     public static synchronized ServerState getInstance() {
         if (INSTANCE == null) {
@@ -23,18 +32,27 @@ public class ServerState {
         return INSTANCE;
     }
 
-    private ServerState() {
-
-    }
-
-    public synchronized void addServerToServerList(@NonNull Server server, @NonNull String ownId){
-        if (server.getServerId().equalsIgnoreCase(ownId)){
+    public synchronized void addServerToServerList(@NonNull Server server, @NonNull String ownId) {
+        if (server.getServerId().equalsIgnoreCase(ownId)) {
             logger.info("Own Server added: " + server.toString());
             this.ownServer = server;
         } else {
             logger.info("Server added: " + server.toString());
             serverList.put(server.getServerId(), server);
         }
+    }
+
+    public synchronized List<Server> getServersWithHigherPriority() { // TODO - have a class level list of higher priority server list
+        Iterator<Server> servers = this.getServerList().values().iterator();
+        List<Server> higherPriorityServerList = new ArrayList<>();
+        while (servers.hasNext()) {
+            Server server = servers.next();
+            if (ownServer.compareTo(server) > 0) {
+                logger.info("Higher priority server found: " + server.toString());
+                higherPriorityServerList.add(server);
+            }
+        }
+        return higherPriorityServerList;
     }
 
 }
