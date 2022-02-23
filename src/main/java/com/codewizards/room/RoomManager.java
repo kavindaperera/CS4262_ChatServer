@@ -52,8 +52,7 @@ public class RoomManager {
     }
 
     public static List<String> getGlobalRoomsListAsArrayList(){
-        List<String> roomsList = new ArrayList<>();
-        roomsList.addAll(globalRoomsList.keySet());
+        List<String> roomsList = new ArrayList<>(globalRoomsList.keySet());
         return roomsList;
     }
 

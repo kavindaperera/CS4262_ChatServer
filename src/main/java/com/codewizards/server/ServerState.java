@@ -42,7 +42,17 @@ public class ServerState {
         }
     }
 
-    public synchronized List<Server> getServersWithHigherPriority() { // TODO - have a class level list of higher priority server list
+    public List<Server> getServerListAsArrayList(){
+        List<Server> returnList = new ArrayList<>();
+        returnList.addAll(serverList.values());
+        return returnList;
+    }
+
+    public Server getServerByServerId(String serverId){
+        return serverList.get(serverId);
+    }
+
+    public synchronized List<Server> getServersWithHigherPriority() { // TODO - have a class level higher priority server list
         Iterator<Server> servers = this.getServerList().values().iterator();
         List<Server> higherPriorityServerList = new ArrayList<>();
         while (servers.hasNext()) {

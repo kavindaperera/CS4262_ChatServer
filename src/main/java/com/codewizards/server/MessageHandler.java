@@ -1,11 +1,15 @@
 package com.codewizards.server;
 
 
+import com.codewizards.election.FastBully;
+import lombok.NonNull;
+import org.apache.log4j.Logger;
+import org.json.simple.JSONObject;
+
 public class MessageHandler {
 
-    //createRoom
+    public static Logger logger = Logger.getLogger(MessageHandler.class.getName());
 
-    //deleteRoom
     public MessageHandler() {
 
     }
@@ -26,12 +30,13 @@ public class MessageHandler {
 
     }
 
-    public void respondToIamUpMessage() {
-
+    public void respondToIamUpMessage(@NonNull Server server) {
+        logger.info("Received IamUp message from " + server.getServerId());
+        FastBully.getInstance().sendViewMessage(server);
     }
 
-    public void respondToViewMessage() {
-
+    public void respondToViewMessage(@NonNull Server server)  {
+        logger.info("Received view message from " + server.getServerId());
     }
 
 }
