@@ -47,6 +47,11 @@ public class ServerState {
         returnList.addAll(serverList.values());
         return returnList;
     }
+    public List<String> getServerIdList(){
+        List<String> returnList = new ArrayList<>();
+        returnList.addAll(serverList.keySet());
+        return returnList;
+    }
 
     public Server getServerByServerId(String serverId){
         return serverList.get(serverId);
