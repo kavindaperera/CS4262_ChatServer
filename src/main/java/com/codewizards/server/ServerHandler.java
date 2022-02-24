@@ -73,6 +73,8 @@ public class ServerHandler extends Thread{
             logger.error("Message Error: " + e.getMessage());
         } catch (IOException e) {
             logger.error("Communication Error: " + e.getMessage());
+        } catch (InterruptedException e) {
+            logger.error(e.getMessage());
         }
     }
 }

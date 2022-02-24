@@ -30,13 +30,15 @@ public class MessageHandler {
 
     }
 
-    public void respondToIamUpMessage(@NonNull Server server) {
+    public void respondToIamUpMessage(@NonNull Server server) throws InterruptedException {
         logger.info("Received IamUp message from " + server.getServerId());
+        Thread.sleep(3000L); // delay reply
         FastBully.getInstance().sendViewMessage(server);
     }
 
     public void respondToViewMessage(@NonNull Server server)  {
         logger.info("Received view message from " + server.getServerId());
+        FastBully.getInstance().stopViewMessageTimeout();
     }
 
 }

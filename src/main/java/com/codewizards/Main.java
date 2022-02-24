@@ -52,7 +52,7 @@ public class Main {
                 while (true) {
                     try {
                         Socket socket = serverSocket.accept();
-                        logger.info("Server Connected");
+                        logger.info("Server Connected | port: " + socket.getLocalPort());
                         ServerHandler serverHandler = new ServerHandler(socket);
                         serverHandler.start();
                     } catch (IOException e) {
