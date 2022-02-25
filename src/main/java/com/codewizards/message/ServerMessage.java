@@ -1,5 +1,6 @@
 package com.codewizards.message;
 
+import com.codewizards.server.Server;
 import lombok.NonNull;
 import org.json.simple.JSONObject;
 
@@ -48,7 +49,7 @@ public class ServerMessage {
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject getViewMessage(@NonNull String serverId, List<String> processesList) {
+    public static JSONObject getViewMessage(@NonNull String serverId, @NonNull List<String> processesList) {
         JSONObject view = new JSONObject();
         view.put("type", "view");
         view.put("serverId", serverId);

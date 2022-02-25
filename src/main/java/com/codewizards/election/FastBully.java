@@ -5,19 +5,17 @@ import com.codewizards.message.ServerMessage;
 import com.codewizards.server.Server;
 import com.codewizards.server.ServerState;
 import io.reactivex.Completable;
-import io.reactivex.Scheduler;
 import io.reactivex.annotations.NonNull;
-import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
-import lombok.Getter;
-import lombok.Setter;
 import org.apache.log4j.Logger;
 
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FastBully {
 
@@ -25,13 +23,9 @@ public class FastBully {
 
     private static FastBully INSTANCE;
 
-    private Disposable viewMessageTimeoutDisposable;
+    private CompositeDisposable viewMessageTimeoutDisposable;
 
-    @Getter
-    @Setter
-    private static boolean electionReady = true;
-
-
+    private AtomicBoolean isWaitingForViewMessage = new AtomicBoolean(false);
 
     private FastBully() {
     }
@@ -43,11 +37,10 @@ public class FastBully {
         return INSTANCE;
     }
 
-    public String notifyIamUp(List<Server> serverList){
+    public String notifyIamUp(List<Server> serverList) {
         logger.info("IamUp!!!");
         for (Server server : serverList) {
             sendIamUpMessage(server);
-            startViewMessageTimeout();
         }
         return null;
     }
@@ -59,10 +52,10 @@ public class FastBully {
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
             dataOutputStream.write((ServerMessage.getIamUpMessage(ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes("UTF-8"));
             dataOutputStream.flush();
-        } catch (Exception e) {
-            logger.error(e.getMessage() + ": " + server.getServerId());
+            startViewMessageTimeout();
+        } catch (IOException e) {
+            logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
         }
-
     }
 
     public void sendViewMessage(Server server) {
@@ -70,20 +63,28 @@ public class FastBully {
         try {
             Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            dataOutputStream.write((ServerMessage.getViewMessage(ServerState.getInstance().getOwnServer().getServerId(), null) + "\n").getBytes("UTF-8"));
+            dataOutputStream.write((ServerMessage.getViewMessage(
+                    ServerState.getInstance().getOwnServer().getServerId(),
+                    ServerState.getInstance().getServerIdList()) + "\n").getBytes("UTF-8"));
             dataOutputStream.flush();
         } catch (Exception e) {
             logger.error(e.getMessage() + ": " + server.getServerId());
         }
 
     }
-    
-    private void startViewMessageTimeout(){
-        viewMessageTimeoutDisposable =  Completable.timer(Constants.VIEW_MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS)
+
+    private void startViewMessageTimeout() {
+
+        if (viewMessageTimeoutDisposable == null) {
+            viewMessageTimeoutDisposable = new CompositeDisposable();
+        }
+
+        viewMessageTimeoutDisposable.add(Completable.timer(Constants.VIEW_MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS)
                 .subscribeWith(new DisposableCompletableObserver() {
                                    @Override
                                    public void onStart() {
-                                       logger.info("view message timeout started!");
+                                       logger.info("View message timeout started!");
+                                       isWaitingForViewMessage.set(true);
                                    }
 
                                    @Override
@@ -93,10 +94,20 @@ public class FastBully {
 
                                    @Override
                                    public void onComplete() {
-                                       logger.info("view message timeout completed!");
+                                       logger.info("View message timeout completed!");
+                                       logger.info("No view message received");
+                                       stopViewMessageTimeout();
                                    }
                                }
-                );
+                ));
+
+    }
+
+    public void stopViewMessageTimeout() {
+        if (isWaitingForViewMessage.get() && !viewMessageTimeoutDisposable.isDisposed()) {
+            logger.info("View message timeout stopped!");
+            viewMessageTimeoutDisposable.dispose();
+        }
     }
 
 }
