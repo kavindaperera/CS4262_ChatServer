@@ -40,7 +40,6 @@ public class ServerHandler extends Thread{
                 message = (JSONObject) parser.parse(reader.readLine());
                 type = (String) message.get("type");
                 server = ServerState.getInstance().getServerByServerId((String)message.get("serverId"));
-                logger.debug("Received: " + message);
                 switch (type) {
                     case "election": {
                         this.messageHandler.respondToElectionMessage();
@@ -63,7 +62,7 @@ public class ServerHandler extends Thread{
                         break;
                     }
                     case "view": {
-                        this.messageHandler.respondToViewMessage(server);
+                        this.messageHandler.respondToViewMessage(server, message);
                         break;
                     }
 
