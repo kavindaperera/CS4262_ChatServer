@@ -5,9 +5,9 @@ import com.codewizards.message.ServerMessage;
 import com.codewizards.server.Server;
 import com.codewizards.server.ServerState;
 import io.reactivex.Completable;
-import io.reactivex.annotations.NonNull;
-import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.observers.DisposableCompletableObserver;
+import lombok.NonNull;
 import org.apache.log4j.Logger;
 
 import java.io.DataOutputStream;
@@ -23,9 +23,11 @@ public class FastBully {
 
     private static FastBully INSTANCE;
 
-    private CompositeDisposable viewMessageTimeoutDisposable;
+    private Disposable viewMessageTimeoutDisposable;
 
     private AtomicBoolean isWaitingForViewMessage = new AtomicBoolean(false);
+
+    private AtomicBoolean viewMessagesReceived = new AtomicBoolean(false);
 
     private FastBully() {
     }
@@ -42,6 +44,9 @@ public class FastBully {
         for (Server server : serverList) {
             sendIamUpMessage(server);
         }
+
+        startViewMessageTimeout();
+
         return null;
     }
 
@@ -52,7 +57,7 @@ public class FastBully {
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
             dataOutputStream.write((ServerMessage.getIamUpMessage(ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes("UTF-8"));
             dataOutputStream.flush();
-            startViewMessageTimeout();
+
         } catch (IOException e) {
             logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
         }
@@ -65,7 +70,7 @@ public class FastBully {
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
             dataOutputStream.write((ServerMessage.getViewMessage(
                     ServerState.getInstance().getOwnServer().getServerId(),
-                    ServerState.getInstance().getServerIdList()) + "\n").getBytes("UTF-8"));
+                    ServerState.getInstance().getServerViewAsArrayList()) + "\n").getBytes("UTF-8"));
             dataOutputStream.flush();
         } catch (Exception e) {
             logger.error(e.getMessage() + ": " + server.getServerId());
@@ -74,12 +79,7 @@ public class FastBully {
     }
 
     private void startViewMessageTimeout() {
-
-        if (viewMessageTimeoutDisposable == null) {
-            viewMessageTimeoutDisposable = new CompositeDisposable();
-        }
-
-        viewMessageTimeoutDisposable.add(Completable.timer(Constants.VIEW_MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS)
+        viewMessageTimeoutDisposable = (Completable.timer(Constants.VIEW_MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS)
                 .subscribeWith(new DisposableCompletableObserver() {
                                    @Override
                                    public void onStart() {
@@ -95,12 +95,13 @@ public class FastBully {
                                    @Override
                                    public void onComplete() {
                                        logger.info("View message timeout completed!");
-                                       logger.info("No view message received");
-                                       stopViewMessageTimeout();
+                                       if (!viewMessagesReceived.get()){
+                                           logger.info("Self set new coordinator");
+                                           setCoordinator(ServerState.getInstance().getOwnServer());
+                                       }
                                    }
                                }
                 ));
-
     }
 
     public void stopViewMessageTimeout() {
@@ -108,6 +109,15 @@ public class FastBully {
             logger.info("View message timeout stopped!");
             viewMessageTimeoutDisposable.dispose();
         }
+    }
+
+    public void setViewMessagesReceived(@NonNull Boolean z){
+        viewMessagesReceived.set(z);
+    }
+
+    public void setCoordinator(Server coordinator){
+        logger.info("Set " + coordinator.getServerId() + " as coordinator");
+        ServerState.getInstance().setCoordinator(coordinator);
     }
 
 }
