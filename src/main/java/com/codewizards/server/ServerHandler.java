@@ -54,7 +54,7 @@ public class ServerHandler extends Thread{
                         break;
                     }
                     case "coordinator": {
-                        this.messageHandler.respondToCoordinatorMessage();
+                        this.messageHandler.respondToCoordinatorMessage(server);
                         break;
                     }
                     case "IamUp": {

@@ -28,8 +28,9 @@ public class MessageHandler {
 
     }
 
-    public void respondToCoordinatorMessage() {
-
+    public void respondToCoordinatorMessage(@NonNull Server server) {
+        logger.info("Received coordinator message from " + server.getServerId());
+        FastBully.getInstance().setCoordinator(server);
     }
 
     public void respondToIamUpMessage(@NonNull Server server) throws InterruptedException {
@@ -46,9 +47,11 @@ public class MessageHandler {
         Server highestPriorityServer = ServerState.getInstance().getHighestPriorityServer();
         if (highestPriorityServer.getServerId().equalsIgnoreCase(ServerState.getInstance().getOwnServer().getServerId())){
             logger.info("I am the highest priority numbered process");
-            FastBully.getInstance().setCoordinator(highestPriorityServer);
+            // send coordinator message to lower priority servers
+            FastBully.getInstance().notifyNewCoordinator(ServerState.getInstance().getServersWithLowerPriority());
         } else{
             FastBully.getInstance().setCoordinator(highestPriorityServer);
+            // stop election
         }
 
     }

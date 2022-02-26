@@ -44,9 +44,7 @@ public class FastBully {
         for (Server server : serverList) {
             sendIamUpMessage(server);
         }
-
         startViewMessageTimeout();
-
         return null;
     }
 
@@ -75,7 +73,26 @@ public class FastBully {
         } catch (Exception e) {
             logger.error(e.getMessage() + ": " + server.getServerId());
         }
+    }
 
+    public void notifyNewCoordinator(List<Server> lowerPriorityServers) {
+        for (Server server : lowerPriorityServers) {
+            sendCoordinatorMessage(server);
+        }
+        setCoordinator(ServerState.getInstance().getOwnServer());
+    }
+
+    public void sendCoordinatorMessage(Server server) {
+        logger.info("Send coordinator message to: " + server.getServerId());
+        try {
+            Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            dataOutputStream.write((ServerMessage.getCoordinatorMessage(
+                    ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes("UTF-8"));
+            dataOutputStream.flush();
+        } catch (Exception e) {
+            logger.error(e.getMessage() + ": " + server.getServerId());
+        }
     }
 
     private void startViewMessageTimeout() {
@@ -95,10 +112,11 @@ public class FastBully {
                                    @Override
                                    public void onComplete() {
                                        logger.info("View message timeout completed!");
-                                       if (!viewMessagesReceived.get()){
+                                       if (!viewMessagesReceived.get()) {
                                            logger.info("Self set new coordinator");
                                            setCoordinator(ServerState.getInstance().getOwnServer());
                                        }
+                                       stopViewMessageTimeout();
                                    }
                                }
                 ));
@@ -107,15 +125,16 @@ public class FastBully {
     public void stopViewMessageTimeout() {
         if (isWaitingForViewMessage.get() && !viewMessageTimeoutDisposable.isDisposed()) {
             logger.info("View message timeout stopped!");
+            isWaitingForViewMessage.set(false);
             viewMessageTimeoutDisposable.dispose();
         }
     }
 
-    public void setViewMessagesReceived(@NonNull Boolean z){
+    public void setViewMessagesReceived(@NonNull Boolean z) {
         viewMessagesReceived.set(z);
     }
 
-    public void setCoordinator(Server coordinator){
+    public void setCoordinator(Server coordinator) {
         logger.info("Set " + coordinator.getServerId() + " as coordinator");
         ServerState.getInstance().setCoordinator(coordinator);
     }
