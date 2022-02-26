@@ -62,15 +62,11 @@ public class ServerState {
     }
 
     public List<Server> getServerListAsArrayList() {
-        List<Server> returnList = new ArrayList<>();
-        returnList.addAll(serverList.values());
-        return returnList;
+        return new ArrayList<>(serverList.values());
     }
 
     public List<String> getServerIdList() {
-        List<String> returnList = new ArrayList<>();
-        returnList.addAll(serverList.keySet());
-        return returnList;
+        return new ArrayList<>(serverList.keySet());
     }
 
     public Server getServerByServerId(String serverId) {
@@ -81,9 +77,7 @@ public class ServerState {
     }
 
     public List<String> getServerViewAsArrayList() {
-        List<String> returnList = new ArrayList<>();
-        returnList.addAll(serverView.keySet());
-        return returnList;
+        return new ArrayList<>(serverView.keySet());
     }
 
     public void compareAndSetView(@NonNull List<String> view) {

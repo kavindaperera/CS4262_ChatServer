@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,7 +54,7 @@ public class FastBully {
         try {
             Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            dataOutputStream.write((ServerMessage.getIamUpMessage(ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes("UTF-8"));
+            dataOutputStream.write((ServerMessage.getIamUpMessage(ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes(StandardCharsets.UTF_8));
             dataOutputStream.flush();
 
         } catch (IOException e) {
@@ -68,7 +69,7 @@ public class FastBully {
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
             dataOutputStream.write((ServerMessage.getViewMessage(
                     ServerState.getInstance().getOwnServer().getServerId(),
-                    ServerState.getInstance().getServerViewAsArrayList()) + "\n").getBytes("UTF-8"));
+                    ServerState.getInstance().getServerViewAsArrayList()) + "\n").getBytes(StandardCharsets.UTF_8));
             dataOutputStream.flush();
         } catch (Exception e) {
             logger.error(e.getMessage() + ": " + server.getServerId());
@@ -88,7 +89,7 @@ public class FastBully {
             Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
             dataOutputStream.write((ServerMessage.getCoordinatorMessage(
-                    ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes("UTF-8"));
+                    ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes(StandardCharsets.UTF_8));
             dataOutputStream.flush();
         } catch (Exception e) {
             logger.error(e.getMessage() + ": " + server.getServerId());
@@ -119,7 +120,8 @@ public class FastBully {
                                        stopViewMessageTimeout();
                                    }
                                }
-                ));
+                )
+        );
     }
 
     public void stopViewMessageTimeout() {
