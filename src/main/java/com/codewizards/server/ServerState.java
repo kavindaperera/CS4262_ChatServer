@@ -61,32 +61,32 @@ public class ServerState {
         logger.info("Server " + server.getServerId() + " removed from view");
     }
 
-    public List<Server> getServerListAsArrayList(){
+    public List<Server> getServerListAsArrayList() {
         List<Server> returnList = new ArrayList<>();
         returnList.addAll(serverList.values());
         return returnList;
     }
 
-    public List<String> getServerIdList(){
+    public List<String> getServerIdList() {
         List<String> returnList = new ArrayList<>();
         returnList.addAll(serverList.keySet());
         return returnList;
     }
 
-    public Server getServerByServerId(String serverId){
-        if (ownServer.getServerId().equalsIgnoreCase(serverId)){
+    public Server getServerByServerId(String serverId) {
+        if (ownServer.getServerId().equalsIgnoreCase(serverId)) {
             return ownServer;
         }
         return serverList.get(serverId);
     }
 
-    public List<String> getServerViewAsArrayList(){
+    public List<String> getServerViewAsArrayList() {
         List<String> returnList = new ArrayList<>();
         returnList.addAll(serverView.keySet());
         return returnList;
     }
 
-    public void compareAndSetView(@NonNull List<String> view){
+    public void compareAndSetView(@NonNull List<String> view) {
         for (String server : view) {
             addServerToServerView(getServerByServerId(server));
         }
@@ -94,8 +94,8 @@ public class ServerState {
     }
 
     public synchronized List<Server> getServersWithHigherPriority() {
-        Iterator<Server> servers = this.getServerView().values().iterator();
-        List<Server> higherPriorityServerList = new ArrayList<>();
+        Iterator<Server> servers = serverList.values().iterator();
+        List<Server> higherPriorityServerList = new ArrayList<>(); // change to class level list
         while (servers.hasNext()) {
             Server server = servers.next();
             if (ownServer.compareTo(server) > 0) {
@@ -106,7 +106,7 @@ public class ServerState {
         return higherPriorityServerList;
     }
 
-    public synchronized Server getHighestPriorityServer(){
+    public synchronized Server getHighestPriorityServer() {
         Server highestPriorityServer = ownServer;
         for (Server server : serverView.values()) {
             if (highestPriorityServer.compareTo(server) > 0) {
@@ -114,6 +114,17 @@ public class ServerState {
             }
         }
         return highestPriorityServer;
+    }
+
+    public synchronized List<Server> getServersWithLowerPriority() {
+        List<Server> lowerPriorityServerList = new ArrayList<>(); // change to class level list
+        for (Server server : serverList.values()) {
+            if (ownServer.compareTo(server) < 0) {
+                logger.info("Lower priority server found: " + server.getServerId());
+                lowerPriorityServerList.add(server);
+            }
+        }
+        return lowerPriorityServerList;
     }
 
 }
