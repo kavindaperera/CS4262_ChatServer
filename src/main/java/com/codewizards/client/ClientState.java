@@ -1,13 +1,22 @@
 package com.codewizards.client;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.net.Socket;
 
 public class ClientState {
 
+    @Getter
+    @Setter
     private String roomId;
 
+    @Getter
+    @Setter
     private String clientId;
 
+    @Getter
+    @Setter
     private Socket socket;
 
     public ClientState(String roomId, String clientId, Socket socket) {
@@ -16,27 +25,12 @@ public class ClientState {
         this.socket = socket;
     }
 
-    public String getRoomId() {
-        return roomId;
-    }
-
-    public void setRoomId(String roomId) {
-        this.roomId = roomId;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
+    @Override
+    public String toString() {
+        return "ClientState{" +
+                "roomId='" + roomId + '\'' +
+                ", clientId='" + clientId + '\'' +
+                ", socket=" + socket +
+                '}';
     }
 }
