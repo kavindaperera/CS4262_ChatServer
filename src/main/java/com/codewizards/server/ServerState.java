@@ -51,7 +51,7 @@ public class ServerState {
         }
     }
 
-    private synchronized void addServerToServerView(@NonNull Server server) {
+    public synchronized void addServerToServerView(@NonNull Server server) {
         serverView.put(server.getServerId(), server);
         logger.info("Server " + server.getServerId() + " added to view");
     }

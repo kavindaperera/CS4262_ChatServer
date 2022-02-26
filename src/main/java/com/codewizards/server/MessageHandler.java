@@ -37,6 +37,7 @@ public class MessageHandler {
         logger.info("Received IamUp from " + server.getServerId());
         Thread.sleep(3000L); // delay reply
         FastBully.getInstance().sendViewMessage(server);
+        ServerState.getInstance().addServerToServerView(server);
     }
 
     public void respondToViewMessage(@NonNull Server server, @NonNull JSONObject message)  {
