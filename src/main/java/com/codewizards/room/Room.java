@@ -5,6 +5,7 @@ import lombok.NonNull;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -46,7 +47,7 @@ public class Room {
                 if (!clientId.equalsIgnoreCase(sender)) {
                     clientState = clientHashMap.get(clientId);
                     writer = new DataOutputStream(clientState.getSocket().getOutputStream());
-                    writer.write((message + "\n").getBytes("UTF-8"));
+                    writer.write((message + "\n").getBytes(StandardCharsets.UTF_8));
                     writer.flush();
                     writer = null;
                 }

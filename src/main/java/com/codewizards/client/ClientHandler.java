@@ -15,6 +15,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class ClientHandler extends Thread{
 
@@ -43,7 +44,7 @@ public class ClientHandler extends Thread{
         try {
             this.writer = new DataOutputStream(clientSocket.getOutputStream());
 
-            this.reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), "UTF-8"));
+            this.reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
 
             JSONObject receivedMessage;
             String type;
@@ -54,7 +55,7 @@ public class ClientHandler extends Thread{
                 switch (type) {
                     case "newidentity": {
                         JSONObject response = this.messageHandler.respondToIdentityRequest(receivedMessage);
-                        writer.write((response.toJSONString() + "\n").getBytes("UTF-8"));
+                        writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
 
                         if (response.get("approved").toString().equalsIgnoreCase("true")) {
 
@@ -62,7 +63,7 @@ public class ClientHandler extends Thread{
                             RoomManager.getLocalRoomsList().get(RoomManager.MAINHALL_ID).getClientHashMap().put(receivedMessage.get("identity").toString(), this.clientState);
 
                             JSONObject broadcast = ClientMessage.getRoomChangeBroadcast(receivedMessage.get("identity").toString(), "", RoomManager.MAINHALL_ID);
-                            writer.write((broadcast.toJSONString() + "\n").getBytes("UTF-8"));
+                            writer.write((broadcast.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
 
                             RoomManager.broadcastToChatRoom(clientState.getRoomId(), clientState.getClientId(), broadcast.toJSONString());
                         }
@@ -71,7 +72,7 @@ public class ClientHandler extends Thread{
                     }
                     case "list": {
                         JSONObject response = this.messageHandler.respondToListRequest();
-                        writer.write((response.toJSONString() + "\n").getBytes("UTF-8"));
+                        writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
                         writer.flush();
                         break;
                     }

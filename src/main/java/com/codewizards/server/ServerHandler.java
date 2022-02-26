@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class ServerHandler extends Thread{
 
@@ -31,7 +32,7 @@ public class ServerHandler extends Thread{
     public void run() {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    serverSocket.getInputStream(), "UTF-8"));
+                    serverSocket.getInputStream(), StandardCharsets.UTF_8));
 
             JSONObject message;
             String type;
