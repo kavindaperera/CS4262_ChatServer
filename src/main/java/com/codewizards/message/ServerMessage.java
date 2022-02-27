@@ -57,4 +57,19 @@ public class ServerMessage {
         return view;
     }
 
+    public static JSONObject getApproveClientIDMessage(@NonNull String approved) {
+        JSONObject approveClientID = new JSONObject();
+        approveClientID.put("type", "approveClientId");
+        approveClientID.put("approved", approved);
+        return approveClientID;
+    }
+
+    public static JSONObject getRequestClientIdApprovalMessage(@NonNull String serverId, @NonNull String requestedId) {
+        JSONObject requestClientIdApproval = new JSONObject();
+        requestClientIdApproval.put("type", "requestClientIdApproval");
+        requestClientIdApproval.put("serverId", serverId);
+        requestClientIdApproval.put("identity", requestedId);
+        return requestClientIdApproval;
+    }
+
 }
