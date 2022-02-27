@@ -7,6 +7,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -33,6 +34,8 @@ public class ServerHandler extends Thread{
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(
                     serverSocket.getInputStream(), StandardCharsets.UTF_8));
+
+            DataOutputStream writer = new DataOutputStream(serverSocket.getOutputStream());
 
             JSONObject message;
             String type;
@@ -66,6 +69,13 @@ public class ServerHandler extends Thread{
                         this.messageHandler.respondToViewMessage(server, message);
                         break;
                     }
+                    case "requestClientIdApproval": {
+                        JSONObject response = this.messageHandler.respondToClientIdApprovalMessage(message);
+                        writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+                        writer.flush();
+                        break;
+                    }
+
 
                 }
             }
