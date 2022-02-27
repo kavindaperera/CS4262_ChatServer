@@ -1,6 +1,7 @@
 package com.codewizards.election;
 
 import com.codewizards.Constants;
+import com.codewizards.message.ServerMessage;
 import com.codewizards.server.Server;
 import com.codewizards.server.ServerState;
 import io.reactivex.Observable;
@@ -11,6 +12,10 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import org.apache.log4j.Logger;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,18 +52,19 @@ public class Leader {
 
         if (serverObservable != null) return;
 
-        List<Server> servers = ServerState.getInstance().getServerListAsArrayList();
-
         serverObservable = Observable
                 .create((ObservableOnSubscribe<Server>) emitter -> {
-                    for (Server server : servers) {
+
+                    for (Server server : ServerState.getInstance().getServerViewAsServerArrayList()) {
                         if (!emitter.isDisposed()) {
                             emitter.onNext(server);
                         }
                     }
+
                     if (!emitter.isDisposed()) {
                         emitter.onComplete();
                     }
+
                 }).subscribeOn(Schedulers.io())
                 .repeatWhen(throwableObservable -> throwableObservable.delay(Constants.HEARTBEAT_SND_INTERVAL, TimeUnit.MILLISECONDS))
                 .filter(server -> heartbeatRunning.get());
@@ -73,7 +79,7 @@ public class Leader {
             @Override
             public void onNext(@NonNull Server server) {
                 logger.info("onNext: Send Leader Heartbeat to " + server.getServerId());
-                // TODO - send heartbeat
+                Leader.getInstance().sendHeartbeatMessage(server);
             }
 
             @Override
@@ -87,6 +93,18 @@ public class Leader {
             }
         });
 
+    }
+
+    public void sendHeartbeatMessage(@NonNull Server server){
+        try {
+            Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            dataOutputStream.write((ServerMessage.getHeartbeatMessage(ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes(StandardCharsets.UTF_8));
+            dataOutputStream.flush();
+
+        } catch (IOException e) {
+            logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
+        }
     }
 
 }
