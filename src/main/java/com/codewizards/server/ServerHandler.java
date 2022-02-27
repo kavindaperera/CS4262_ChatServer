@@ -37,44 +37,48 @@ public class ServerHandler extends Thread{
 
             DataOutputStream writer = new DataOutputStream(serverSocket.getOutputStream());
 
-            JSONObject message = (JSONObject) parser.parse(reader.readLine());
-            String type = (String) message.get("type");
-            Server server = ServerState.getInstance().getServerByServerId((String)message.get("serverId"));
+            JSONObject message;
+            String type;
+            Server server;
+            while(true) {
+                message = (JSONObject) parser.parse(reader.readLine());
+                type = (String) message.get("type");
+                server = ServerState.getInstance().getServerByServerId((String)message.get("serverId"));
+                switch (type) {
+                    case "election": {
+                        this.messageHandler.respondToElectionMessage();
+                        break;
+                    }
+                    case "answer": {
+                        this.messageHandler.respondToAnswerMessage();
+                        break;
+                    }
+                    case "nomination": {
+                        this.messageHandler.respondToNominationMessage();
+                        break;
+                    }
+                    case "coordinator": {
+                        this.messageHandler.respondToCoordinatorMessage(server);
+                        break;
+                    }
+                    case "IamUp": {
+                        this.messageHandler.respondToIamUpMessage(server);
+                        break;
+                    }
+                    case "view": {
+                        this.messageHandler.respondToViewMessage(server, message);
+                        break;
+                    }
+                    case "requestClientIdApproval": {
+                        JSONObject response = this.messageHandler.respondToClientIdApprovalMessage(message);
+                        writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+                        writer.flush();
+                        break;
+                    }
 
-            switch (type) {
-                case "election": {
-                    this.messageHandler.respondToElectionMessage();
-                    break;
-                }
-                case "answer": {
-                    this.messageHandler.respondToAnswerMessage();
-                    break;
-                }
-                case "nomination": {
-                    this.messageHandler.respondToNominationMessage();
-                    break;
-                }
-                case "coordinator": {
-                    this.messageHandler.respondToCoordinatorMessage(server);
-                    break;
-                }
-                case "IamUp": {
-                    this.messageHandler.respondToIamUpMessage(server);
-                    break;
-                }
-                case "view": {
-                    this.messageHandler.respondToViewMessage(server, message);
-                    break;
-                }
-                case "requestClientIdApproval": {
-                    JSONObject response = this.messageHandler.respondToClientIdApprovalMessage(message);
-                    writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
-                    writer.flush();
-                    break;
+
                 }
             }
-            serverSocket.close();
-
         } catch (ParseException e) {
             logger.error("Message Error: " + e.getMessage());
         } catch (IOException e) {
