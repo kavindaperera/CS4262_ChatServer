@@ -1,6 +1,5 @@
 package com.codewizards.client;
 
-import lombok.Getter;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
@@ -13,11 +12,14 @@ public class ClientManager {
 
     private static final ConcurrentHashMap<String, String> globalClientsList = new ConcurrentHashMap<>();
 
-    @Getter
     private static final ArrayList<String> localClientsList = new ArrayList<>();
 
     public ClientManager() {
 
+    }
+
+    public static ArrayList<String> getLocalClientsList() {
+        return localClientsList;
     }
 
     public static List<String> getGlobalClientsListAsArrayList(){
