@@ -8,6 +8,10 @@ import lombok.NonNull;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class MessageHandler {
@@ -59,7 +63,7 @@ public class MessageHandler {
 
     }
 
-    public JSONObject respondToClientIdApprovalMessage(JSONObject receivedMessage) {
+    public void respondToRequestClientIdApprovalMessage(JSONObject receivedMessage) {
         String requestedID = (String) receivedMessage.get("identity");
         JSONObject response = null;
         if (ClientManager.checkClientIdentityAvailability(requestedID)){
@@ -68,7 +72,26 @@ public class MessageHandler {
         } else {
             response = ServerMessage.getApproveClientIDMessage("false");
         }
-        return response;
+
+        sendApproveClientIdMessage(ServerState.getInstance().getServerByServerId(receivedMessage.get("serverId").toString()), response.toJSONString());
+    }
+
+    public void respondToApproveClientIdMessage(JSONObject receivedMessage) {
+        String approved = (String) receivedMessage.get("approved");
+        // set idApprovalReceived variable in the MessageHandler of the respective ClientHandler
+    }
+
+    private void sendApproveClientIdMessage(Server server, String message) {
+        logger.info("Send approveClientId to: " + server.getServerId());
+        try {
+            Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            dataOutputStream.write((message + "\n").getBytes(StandardCharsets.UTF_8));
+            dataOutputStream.flush();
+
+        } catch (IOException e) {
+            logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
+        }
     }
 
 }

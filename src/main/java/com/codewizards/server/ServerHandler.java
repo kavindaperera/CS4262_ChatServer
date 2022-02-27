@@ -35,8 +35,6 @@ public class ServerHandler extends Thread{
             BufferedReader reader = new BufferedReader(new InputStreamReader(
                     serverSocket.getInputStream(), StandardCharsets.UTF_8));
 
-            DataOutputStream writer = new DataOutputStream(serverSocket.getOutputStream());
-
             JSONObject message = (JSONObject) parser.parse(reader.readLine());
             String type = (String) message.get("type");
             Server server = ServerState.getInstance().getServerByServerId((String)message.get("serverId"));
@@ -67,9 +65,11 @@ public class ServerHandler extends Thread{
                     break;
                 }
                 case "requestClientIdApproval": {
-                    JSONObject response = this.messageHandler.respondToClientIdApprovalMessage(message);
-                    writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
-                    writer.flush();
+                    this.messageHandler.respondToRequestClientIdApprovalMessage(message);
+                    break;
+                }
+                case "approveClientId": {
+                    this.messageHandler.respondToApproveClientIdMessage(message);
                     break;
                 }
             }
