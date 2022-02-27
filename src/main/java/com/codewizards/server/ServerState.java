@@ -1,5 +1,6 @@
 package com.codewizards.server;
 
+import com.codewizards.election.Leader;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -44,7 +45,6 @@ public class ServerState {
         if (server.getServerId().equalsIgnoreCase(ownId)) {
             logger.info("Own Server added: " + server.toString());
             this.ownServer = server;
-            addServerToServerView(server);
         } else {
             logger.info("Server added: " + server.toString());
             serverList.put(server.getServerId(), server);
@@ -78,6 +78,10 @@ public class ServerState {
 
     public List<String> getServerViewAsArrayList() {
         return new ArrayList<>(serverView.keySet());
+    }
+
+    public List<Server> getServerViewAsServerArrayList() {
+        return new ArrayList<>(serverView.values());
     }
 
     public void compareAndSetView(@NonNull List<String> view) {

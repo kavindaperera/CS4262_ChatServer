@@ -72,6 +72,10 @@ public class ServerHandler extends Thread{
                     this.messageHandler.respondToApproveClientIdMessage(message);
                     break;
                 }
+                case "heartbeat":{
+                    logger.debug("Received: " + message);
+                    break;
+                }
             }
             serverSocket.close();
 
