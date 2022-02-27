@@ -136,9 +136,33 @@ public class FastBully {
         viewMessagesReceived.set(z);
     }
 
-    public void setCoordinator(Server coordinator) {
-        logger.info("Set " + coordinator.getServerId() + " as coordinator");
-        ServerState.getInstance().setCoordinator(coordinator);
+    public synchronized void setCoordinator(Server coordinator) {
+        if (ServerState.getInstance().getOwnServer().equals(coordinator)) {
+            if (coordinator.equals(ServerState.getInstance().getCoordinator())) {
+                logger.info("I'm already the coordinator");
+                // do nothing
+            } else {
+                logger.info("I'm the coordinator");
+                ServerState.getInstance().setCoordinator(coordinator);
+                Leader.getInstance().startHeartbeat();
+            }
+        } else {
+
+            if (ServerState.getInstance().getCoordinator() == null) { // first time
+                logger.info("Set " + coordinator.getServerId() + " as coordinator");
+                ServerState.getInstance().setCoordinator(coordinator);
+            } else if (!ServerState.getInstance().getCoordinator().equals(coordinator)) { // update
+                if (ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) { // stop leader heartbeat if I'm the coordinator
+                    Leader.deleteInstance();
+                }
+                logger.info("Update " + coordinator.getServerId() + " as coordinator");
+                ServerState.getInstance().setCoordinator(coordinator);
+            } else { // already the coordinator
+                logger.info(coordinator.getServerId() + " is already the coordinator");
+                // do nothing
+            }
+        }
     }
+
 
 }
