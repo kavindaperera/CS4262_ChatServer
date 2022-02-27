@@ -73,6 +73,7 @@ public class Leader {
             @Override
             public void onNext(@NonNull Server server) {
                 logger.info("onNext: Send Leader Heartbeat to " + server.getServerId());
+                // TODO - send heartbeat
             }
 
             @Override
