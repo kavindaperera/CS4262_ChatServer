@@ -54,7 +54,7 @@ public class MessageHandler {
             FastBully.getInstance().notifyNewCoordinator(ServerState.getInstance().getServersWithLowerPriority());
         } else{
             FastBully.getInstance().setCoordinator(highestPriorityServer);
-            // stop election
+            // TODO - stop election
         }
 
     }
