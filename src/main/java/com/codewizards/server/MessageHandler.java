@@ -1,7 +1,9 @@
 package com.codewizards.server;
 
 
+import com.codewizards.client.ClientManager;
 import com.codewizards.election.FastBully;
+import com.codewizards.message.ServerMessage;
 import lombok.NonNull;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -55,6 +57,18 @@ public class MessageHandler {
             // stop election
         }
 
+    }
+
+    public JSONObject respondToClientIdApprovalMessage(JSONObject receivedMessage) {
+        String requestedID = (String) receivedMessage.get("identity");
+        JSONObject response = null;
+        if (ClientManager.checkClientIdentityAvailability(requestedID)){
+            response = ServerMessage.getApproveClientIDMessage("true");
+            ClientManager.addToGlobalClientsList(requestedID, receivedMessage.get("serverId").toString());
+        } else {
+            response = ServerMessage.getApproveClientIDMessage("false");
+        }
+        return response;
     }
 
 }
