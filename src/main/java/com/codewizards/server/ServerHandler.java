@@ -1,5 +1,6 @@
 package com.codewizards.server;
 
+import com.codewizards.election.FastBully;
 import lombok.NonNull;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -7,7 +8,6 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -73,7 +73,10 @@ public class ServerHandler extends Thread{
                     break;
                 }
                 case "heartbeat":{
-                    logger.debug("Received: " + message);
+                    logger.debug("Received heartbeat message from: " + message);
+                    if (server.equals(ServerState.getInstance().getCoordinator()) && !server.equals(ServerState.getInstance().getOwnServer())){
+                        FastBully.getInstance().resetHeartbeatWaitTimeout();
+                    }
                     break;
                 }
             }

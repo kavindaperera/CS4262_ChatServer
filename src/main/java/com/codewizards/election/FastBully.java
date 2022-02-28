@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class FastBully {
 
@@ -26,9 +27,12 @@ public class FastBully {
 
     private Disposable viewMessageTimeoutDisposable;
 
+    private Disposable heartbeatWaitTimeoutDisposable;
+
     private AtomicBoolean isWaitingForViewMessage = new AtomicBoolean(false);
 
     private AtomicBoolean viewMessagesReceived = new AtomicBoolean(false);
+    
 
     private FastBully() {
     }
@@ -107,7 +111,7 @@ public class FastBully {
 
                                    @Override
                                    public void onError(@NonNull Throwable error) {
-                                       error.printStackTrace();
+                                       logger.error(error.getMessage());
                                    }
 
                                    @Override
@@ -137,6 +141,9 @@ public class FastBully {
     }
 
     public synchronized void setCoordinator(Server coordinator) {
+
+        stopHeartbeatWaitTimeout();
+
         if (ServerState.getInstance().getOwnServer().equals(coordinator)) {
             if (coordinator.equals(ServerState.getInstance().getCoordinator())) {
                 logger.info("I'm already the coordinator");
@@ -147,7 +154,6 @@ public class FastBully {
                 Leader.getInstance().startHeartbeat();
             }
         } else {
-
             if (ServerState.getInstance().getCoordinator() == null) { // first time
                 logger.info("Set " + coordinator.getServerId() + " as coordinator");
                 ServerState.getInstance().setCoordinator(coordinator);
@@ -161,8 +167,53 @@ public class FastBully {
                 logger.info(coordinator.getServerId() + " is already the coordinator");
                 // do nothing
             }
+
+            startHeartbeatWaitTimeout();
+
         }
     }
 
+    private synchronized void startHeartbeatWaitTimeout() {
+        heartbeatWaitTimeoutDisposable = (Completable.timer(Constants.HEARTBEAT_WAIT_INTERVAL, TimeUnit.MILLISECONDS)
+                .subscribeWith(new DisposableCompletableObserver() {
+
+                                   @Override
+                                   protected void onStart() {
+                                       logger.info("Start Heartbeat wait timeout!");
+                                   }
+
+                                   @Override
+                                   public void onComplete() {
+                                       logger.info("Heartbeat wait timeout completed!");
+                                       logger.info("Leader heartbeat failure, Starting election");
+                                       // TODO - start election
+                                       startElection();
+                                       stopHeartbeatWaitTimeout();
+                                   }
+
+                                   @Override
+                                   public void onError(@NonNull Throwable error) {
+                                       logger.error(error.getMessage());
+                                   }
+                               }
+                )
+        );
+    }
+
+    private synchronized void stopHeartbeatWaitTimeout() {
+        if (heartbeatWaitTimeoutDisposable != null && !heartbeatWaitTimeoutDisposable.isDisposed()) {
+            heartbeatWaitTimeoutDisposable.dispose();
+        }
+    }
+
+    public synchronized void resetHeartbeatWaitTimeout() {
+        logger.info("Reset Heartbeat wait timeout!");
+        stopHeartbeatWaitTimeout();
+        startHeartbeatWaitTimeout();
+    }
+
+    public void startElection(){
+        ServerState.getInstance().removeServerFromServerView(ServerState.getInstance().getCoordinator()); // remove coordinator from view
+    }
 
 }
