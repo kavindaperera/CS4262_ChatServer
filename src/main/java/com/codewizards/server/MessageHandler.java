@@ -50,6 +50,7 @@ public class MessageHandler {
         List<String> view = (List<String>) message.get("processes");
         logger.info("Received view from " + server.getServerId() + " | view: " + view);
         FastBully.getInstance().setViewMessagesReceived(true);
+        view.add(server.getServerId());
         ServerState.getInstance().compareAndSetView(view);
         Server highestPriorityServer = ServerState.getInstance().getHighestPriorityServer();
         if (highestPriorityServer.getServerId().equalsIgnoreCase(ServerState.getInstance().getOwnServer().getServerId())){
