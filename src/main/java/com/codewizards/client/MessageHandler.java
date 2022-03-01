@@ -10,6 +10,7 @@ import io.reactivex.Completable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observers.DisposableCompletableObserver;
 import lombok.NonNull;
+import lombok.Setter;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 
@@ -26,31 +27,38 @@ public class MessageHandler {
 
     public static Logger logger = Logger.getLogger(MessageHandler.class.getName());
 
-    private Disposable idApprovalTimeoutDisposable;
+    //private Disposable idApprovalTimeoutDisposable;
 
-    private AtomicBoolean isWaitingForIdApproval = new AtomicBoolean(false);
+    //private AtomicBoolean isWaitingForIdApproval = new AtomicBoolean(false);
+    @Setter
+    private boolean isWaitingForIdApproval = false;
 
-    private AtomicBoolean idApprovalReceived = new AtomicBoolean(false);
-
-    //createRoom
-
-    //deleteRoom
+    //private AtomicBoolean idApprovalReceived = new AtomicBoolean(false);
+    @Setter
+    private boolean idApprovalReceived = false;
 
     public MessageHandler() {
 
     }
 
-    public JSONObject respondToIdentityRequest(JSONObject receivedMessage) {
-        String identity = (String) receivedMessage.get("identity");
+    public JSONObject respondToIdentityRequest(String identity) {
         logger.info("Client requested for identity " + identity);
 
-        /*
-        sendRequestApprovalMessage(ServerState.getInstance().getCoordinator(), identity);
-        startIdApprovalTimeout();
-        JSONObject response = ClientMessage.getAllowNewIdentityResponse((idApprovalReceived.toString());
-        */
+        if(ClientManager.checkClientIdentityAvailability(identity)) {
+            if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
+                sendRequestApprovalMessage(ServerState.getInstance().getCoordinator(), identity);
+                startIdApprovalTimeout();
+            } else {
+                idApprovalReceived = true;
+            }
+        }
 
-        JSONObject response = ClientMessage.getAllowNewIdentityResponse("true");
+        if (isWaitingForIdApproval) {
+            logger.info("Started a new Election");
+            //start new election
+        }
+        JSONObject response = ClientMessage.getAllowNewIdentityResponse(String.valueOf(idApprovalReceived));
+        //JSONObject response = ClientMessage.getAllowNewIdentityResponse("true");
 
         return response;
     }
@@ -106,6 +114,7 @@ public class MessageHandler {
         }
     }
 
+    /*
     private void startIdApprovalTimeout() {
         idApprovalTimeoutDisposable = (Completable.timer(Constants.REQUEST_APPROVAL_TIMEOUT, TimeUnit.MILLISECONDS)
                 .subscribeWith(new DisposableCompletableObserver() {
@@ -139,6 +148,22 @@ public class MessageHandler {
             logger.info("request identity approval timeout stopped!");
             isWaitingForIdApproval.set(false);
             idApprovalTimeoutDisposable.dispose();
+        }
+    }
+
+    public void setIdApprovalReceived(@NonNull Boolean approval) {
+        idApprovalReceived.set(approval);
+    }
+
+    */
+
+    private void startIdApprovalTimeout(){
+        isWaitingForIdApproval = true;
+        long start = System.currentTimeMillis();
+        long elapsedTime = 0L;
+
+        while (isWaitingForIdApproval && (elapsedTime < Constants.REQUEST_APPROVAL_TIMEOUT)) {
+            elapsedTime = System.currentTimeMillis() - start;
         }
     }
 
