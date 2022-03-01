@@ -13,6 +13,8 @@ public class ClientManager {
 
     private static final ConcurrentHashMap<String, String> globalClientsList = new ConcurrentHashMap<>();
 
+    private static final ConcurrentHashMap<String, ClientHandler> clientHandlersList = new ConcurrentHashMap<>();
+
     @Getter
     private static final ArrayList<String> localClientsList = new ArrayList<>();
 
@@ -40,6 +42,24 @@ public class ClientManager {
     public static void addToLocalClientsList(String clientID) {
         synchronized (localClientsList) {
             localClientsList.add(clientID);
+        }
+    }
+
+    public static void addToClientHandlersList(String clientID, ClientHandler clientHandler) {
+        synchronized (clientHandlersList) {
+            clientHandlersList.put(clientID, clientHandler);
+        }
+    }
+
+    public static ClientHandler getClientHandler(String clientID) {
+        synchronized (clientHandlersList) {
+            return clientHandlersList.get(clientID);
+        }
+    }
+
+    public static void removeFromClientHandlerList(String clientID) {
+        synchronized (clientHandlersList) {
+            clientHandlersList.remove(clientID);
         }
     }
 
