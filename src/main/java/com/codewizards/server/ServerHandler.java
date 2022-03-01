@@ -76,6 +76,14 @@ public class ServerHandler extends Thread{
                     this.messageHandler.respondToInformClientIdCreationMessage(message);
                     break;
                 }
+                case "requestRoomIdApproval": {
+                    this.messageHandler.respondToRequestRoomIdApprovalMessage(message);
+                    break;
+                }
+                case "approveRoomId": {
+                    this.messageHandler.respondToApproveRoomIdMessage(message);
+                    break;
+                }
                 case "heartbeat":{
                     logger.debug("Received heartbeat message from: " + message);
                     if (server.equals(ServerState.getInstance().getCoordinator()) && !server.equals(ServerState.getInstance().getOwnServer())){
