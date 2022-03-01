@@ -109,6 +109,22 @@ public class ServerMessage {
         return requestClientIdApproval;
     }
 
+    public static JSONObject getInformClientIdCreationMessage(@NonNull String serverId, @NonNull String requestedId) {
+        JSONObject informClientIdCreation = new JSONObject();
+        informClientIdCreation.put("type", "informClientIdCreation");
+        informClientIdCreation.put("serverId", serverId);
+        informClientIdCreation.put("identity", requestedId);
+        return informClientIdCreation;
+    }
+
+    public static JSONObject getInformRoomIdCreationMessage(@NonNull String serverId, @NonNull String requestedId) {
+        JSONObject informRoomIdCreation = new JSONObject();
+        informRoomIdCreation.put("type", "informRoomIdCreation");
+        informRoomIdCreation.put("serverId", serverId);
+        informRoomIdCreation.put("identity", requestedId);
+        return informRoomIdCreation;
+    }
+
     /**
      * @param serverId server identifier
      * @return heartbeat message
