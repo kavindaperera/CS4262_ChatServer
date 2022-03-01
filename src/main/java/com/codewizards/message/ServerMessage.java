@@ -109,6 +109,25 @@ public class ServerMessage {
         return requestClientIdApproval;
     }
 
+    public static JSONObject getApproveRoomIDMessage(@NonNull String serverId, @NonNull String approved, @NonNull String requestedId, @NonNull String clientId) {
+        JSONObject approveRoomID = new JSONObject();
+        approveRoomID.put("type", "approveRoomId");
+        approveRoomID.put("identity", requestedId);
+        approveRoomID.put("approved", approved);
+        approveRoomID.put("serverId", serverId);
+        approveRoomID.put("clientId", clientId);
+        return approveRoomID;
+    }
+
+    public static JSONObject getRequestRoomIdApprovalMessage(@NonNull String serverId, @NonNull String requestedId, @NonNull String clientId) {
+        JSONObject requestRoomIdApproval = new JSONObject();
+        requestRoomIdApproval.put("type", "requestRoomIdApproval");
+        requestRoomIdApproval.put("serverId", serverId);
+        requestRoomIdApproval.put("identity", requestedId);
+        requestRoomIdApproval.put("clientId", clientId);
+        return requestRoomIdApproval;
+    }
+
     public static JSONObject getInformClientIdCreationMessage(@NonNull String serverId, @NonNull String requestedId) {
         JSONObject informClientIdCreation = new JSONObject();
         informClientIdCreation.put("type", "informClientIdCreation");
