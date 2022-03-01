@@ -91,10 +91,12 @@ public class ServerMessage {
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject getApproveClientIDMessage(@NonNull String approved) {
+    public static JSONObject getApproveClientIDMessage(@NonNull String serverId, @NonNull String approved, @NonNull String requestedId) {
         JSONObject approveClientID = new JSONObject();
         approveClientID.put("type", "approveClientId");
+        approveClientID.put("identity", requestedId);
         approveClientID.put("approved", approved);
+        approveClientID.put("serverId", serverId);
         return approveClientID;
     }
 
