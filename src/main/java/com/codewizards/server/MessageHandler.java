@@ -86,6 +86,13 @@ public class MessageHandler {
         ClientManager.getClientHandler(identity).getMessageHandler().setWaitingForIdApproval(false);
     }
 
+    public void respondToInformClientIdCreationMessage(JSONObject receivedMessage) {
+        String serverId = (String) receivedMessage.get("serverId");
+        String identity = (String) receivedMessage.get("identity");
+
+        ClientManager.addToGlobalClientsList(identity, serverId);
+    }
+
     private void sendApproveClientIdMessage(Server server, String message) throws InterruptedException {
         logger.info("Send approveClientId to: " + server.getServerId());
         Thread.sleep(1000L); // delay reply
