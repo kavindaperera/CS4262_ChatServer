@@ -3,6 +3,7 @@ package com.codewizards.client;
 import com.codewizards.Constants;
 import com.codewizards.message.ClientMessage;
 import com.codewizards.message.ServerMessage;
+import com.codewizards.room.Room;
 import com.codewizards.room.RoomManager;
 import com.codewizards.server.Server;
 import com.codewizards.server.ServerState;
@@ -58,7 +59,6 @@ public class MessageHandler {
             //start new election
         }
         JSONObject response = ClientMessage.getAllowNewIdentityResponse(String.valueOf(idApprovalReceived));
-        //JSONObject response = ClientMessage.getAllowNewIdentityResponse("true");
 
         return response;
     }
@@ -70,8 +70,11 @@ public class MessageHandler {
         return response;
     }
 
-    public void respondToWhoRequest() {
+    public JSONObject respondToWhoRequest(String currentRoomId) {
+        Room currentRoom = RoomManager.getLocalRoomsList().get(currentRoomId);
+        JSONObject response = ClientMessage.getRoomContents(currentRoomId, currentRoom.getCreatorId(), currentRoom.getClientsAsList());
 
+        return response;
     }
 
     public void respondToCreateRoomRequest() {
