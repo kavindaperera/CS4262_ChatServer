@@ -115,7 +115,10 @@ public class ClientHandler extends Thread{
                         break;
                     }
                     case "who": {
-                        this.messageHandler.respondToWhoRequest();
+                        String currentRoom = clientState.getRoomId();
+                        JSONObject response = this.messageHandler.respondToWhoRequest(currentRoom);
+                        writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+                        writer.flush();
                         break;
                     }
                     case "createroom": {
