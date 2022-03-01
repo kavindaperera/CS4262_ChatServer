@@ -43,11 +43,11 @@ public class MessageHandler {
     }
 
     public JSONObject respondToIdentityRequest(String identity) {
-        logger.info("Client requested for identity " + identity);
+        logger.info("Client requested for identity => " + identity);
 
         if(ClientManager.checkClientIdentityAvailability(identity)) {
             if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
-                sendRequestApprovalMessage(ServerState.getInstance().getCoordinator(), identity);
+                sendRequestClientIdApprovalMessage(ServerState.getInstance().getCoordinator(), identity);
                 startIdApprovalTimeout();
             } else {
                 idApprovalReceived = true;
@@ -77,8 +77,27 @@ public class MessageHandler {
         return response;
     }
 
-    public void respondToCreateRoomRequest() {
+    public JSONObject respondToCreateRoomRequest(String roomId, ClientState clientState) {
+        logger.info("Client requested to create new Room => " + roomId);
 
+        if (clientState.getOwnRoomId().equalsIgnoreCase("")) {
+            if (RoomManager.checkRoomIdAvailability(roomId)) {
+                if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
+                    sendRequestRoomIdApprovalMessage(ServerState.getInstance().getCoordinator(), roomId, clientState.getClientId());
+                    startIdApprovalTimeout();
+                } else {
+                    idApprovalReceived = true;
+                }
+            }
+        }
+
+        if (isWaitingForIdApproval) {
+            logger.info("Started a new Election");
+            //start new election
+        }
+        JSONObject response = ClientMessage.getCreateRoomResponse(roomId, String.valueOf(idApprovalReceived));
+
+        return response;
     }
 
     public void respondToJoinRoomRequest() {
@@ -102,14 +121,25 @@ public class MessageHandler {
         return broadcastMessage;
     }
 
-
-
-    private void sendRequestApprovalMessage(Server server, String identity) {
+    private void sendRequestClientIdApprovalMessage(Server server, String identity) {
         logger.info("Send requestClientIdApproval to: " + server.getServerId());
         try {
             Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
             dataOutputStream.write((ServerMessage.getRequestClientIdApprovalMessage(ServerState.getInstance().getOwnServer().getServerId(), identity) + "\n").getBytes(StandardCharsets.UTF_8));
+            dataOutputStream.flush();
+
+        } catch (IOException e) {
+            logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
+        }
+    }
+
+    private void sendRequestRoomIdApprovalMessage(Server server, String identity, String clientId) {
+        logger.info("Send requestRoomIdApproval to: " + server.getServerId());
+        try {
+            Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            dataOutputStream.write((ServerMessage.getRequestRoomIdApprovalMessage(ServerState.getInstance().getOwnServer().getServerId(), identity, clientId) + "\n").getBytes(StandardCharsets.UTF_8));
             dataOutputStream.flush();
 
         } catch (IOException e) {

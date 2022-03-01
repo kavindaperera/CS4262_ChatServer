@@ -122,7 +122,14 @@ public class ClientHandler extends Thread{
                         break;
                     }
                     case "createroom": {
-                        this.messageHandler.respondToCreateRoomRequest();
+                        String roomId = (String) receivedMessage.get("roomid");
+                        JSONObject response = this.messageHandler.respondToCreateRoomRequest(roomId, clientState);
+                        writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+
+                        if (response.get("approved").toString().equalsIgnoreCase("true")) {
+                            // need to do relevant updates
+                        }
+                        writer.flush();
                         break;
                     }
                     case "joinroom": {
