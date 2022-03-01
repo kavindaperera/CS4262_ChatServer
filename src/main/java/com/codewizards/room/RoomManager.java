@@ -33,8 +33,12 @@ public class RoomManager {
             MAINHALL_ID = roomId;
         }
         Room chatRoom = new Room(roomId, clientId);
-        localRoomsList.put(roomId, chatRoom);
-        globalRoomsList.put(roomId, ServerState.getInstance().getOwnServer().getServerId());
+        synchronized (localRoomsList) {
+            localRoomsList.put(roomId, chatRoom);
+        }
+        synchronized (globalRoomsList) {
+            globalRoomsList.put(roomId, ServerState.getInstance().getOwnServer().getServerId());
+        }
     }
 
     /**
@@ -53,6 +57,18 @@ public class RoomManager {
 
     public static List<String> getGlobalRoomsListAsArrayList(){
         return new ArrayList<>(globalRoomsList.keySet());
+    }
+
+    public static boolean checkRoomIdAvailability(String requestedRoomID) {
+        synchronized (globalRoomsList) {
+            return !globalRoomsList.containsKey(requestedRoomID);
+        }
+    }
+
+    public static void addToGlobalRoomsList(String roomID, String serverID) {
+        synchronized (globalRoomsList) {
+            globalRoomsList.put(roomID, serverID);
+        }
     }
 
     public static void initializeGlobalRoomsList() {
