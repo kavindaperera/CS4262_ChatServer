@@ -1,6 +1,7 @@
 package com.codewizards.server;
 
 
+import com.codewizards.Main;
 import com.codewizards.client.ClientManager;
 import com.codewizards.election.FastBully;
 import com.codewizards.message.ServerMessage;
@@ -64,14 +65,14 @@ public class MessageHandler {
 
     }
 
-    public void respondToRequestClientIdApprovalMessage(JSONObject receivedMessage) {
+    public void respondToRequestClientIdApprovalMessage(JSONObject receivedMessage) throws InterruptedException {
         String requestedID = (String) receivedMessage.get("identity");
         JSONObject response = null;
         if (ClientManager.checkClientIdentityAvailability(requestedID)){
-            response = ServerMessage.getApproveClientIDMessage("true");
+            response = ServerMessage.getApproveClientIDMessage(Main.SERVER_ID,"true", requestedID);
             ClientManager.addToGlobalClientsList(requestedID, receivedMessage.get("serverId").toString());
         } else {
-            response = ServerMessage.getApproveClientIDMessage("false");
+            response = ServerMessage.getApproveClientIDMessage(Main.SERVER_ID,"false", requestedID);
         }
 
         sendApproveClientIdMessage(ServerState.getInstance().getServerByServerId(receivedMessage.get("serverId").toString()), response.toJSONString());
@@ -79,11 +80,15 @@ public class MessageHandler {
 
     public void respondToApproveClientIdMessage(JSONObject receivedMessage) {
         String approved = (String) receivedMessage.get("approved");
-        // set idApprovalReceived variable in the MessageHandler of the respective ClientHandler
+        String identity = (String) receivedMessage.get("identity");
+
+        ClientManager.getClientHandler(identity).getMessageHandler().setIdApprovalReceived(Boolean.parseBoolean(approved));
+        ClientManager.getClientHandler(identity).getMessageHandler().setWaitingForIdApproval(false);
     }
 
-    private void sendApproveClientIdMessage(Server server, String message) {
+    private void sendApproveClientIdMessage(Server server, String message) throws InterruptedException {
         logger.info("Send approveClientId to: " + server.getServerId());
+        Thread.sleep(1000L); // delay reply
         try {
             Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());

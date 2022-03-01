@@ -1,9 +1,11 @@
 package com.codewizards.client;
 
+import com.codewizards.Main;
 import com.codewizards.message.ClientMessage;
 import com.codewizards.room.RoomManager;
 import com.codewizards.server.ServerHandler;
 
+import lombok.Getter;
 import lombok.NonNull;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -25,6 +27,7 @@ public class ClientHandler extends Thread{
 
     private final Socket clientSocket;
 
+    @Getter
     private MessageHandler messageHandler;
 
     private JSONParser parser;
@@ -39,6 +42,13 @@ public class ClientHandler extends Thread{
         this.parser = new JSONParser();
     }
 
+    public void doUpdatesForClientId(String identity){
+        this.clientState = new ClientState(RoomManager.MAINHALL_ID, identity, clientSocket);
+        RoomManager.getLocalRoomsList().get(RoomManager.MAINHALL_ID).getClientHashMap().put(identity, this.clientState);
+        ClientManager.addToLocalClientsList(identity);
+        ClientManager.addToGlobalClientsList(identity, Main.SERVER_ID);
+    }
+
     @Override
     public void run() {
         try {
@@ -46,26 +56,33 @@ public class ClientHandler extends Thread{
 
             this.reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
 
+            boolean isRunning = true;
             JSONObject receivedMessage;
             String type;
-            while(true) {
+
+            while(isRunning) {
                 receivedMessage = (JSONObject) parser.parse(reader.readLine());
                 type = (String) receivedMessage.get("type");
 
                 switch (type) {
                     case "newidentity": {
-                        JSONObject response = this.messageHandler.respondToIdentityRequest(receivedMessage);
+                        String identity = (String) receivedMessage.get("identity");
+                        ClientManager.addToClientHandlersList(identity, this);
+
+                        JSONObject response = this.messageHandler.respondToIdentityRequest(identity);
                         writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
 
                         if (response.get("approved").toString().equalsIgnoreCase("true")) {
 
-                            this.clientState = new ClientState(RoomManager.MAINHALL_ID, receivedMessage.get("identity").toString(), clientSocket);
-                            RoomManager.getLocalRoomsList().get(RoomManager.MAINHALL_ID).getClientHashMap().put(receivedMessage.get("identity").toString(), this.clientState);
+                            doUpdatesForClientId(identity);
 
-                            JSONObject broadcast = ClientMessage.getRoomChangeBroadcast(receivedMessage.get("identity").toString(), "", RoomManager.MAINHALL_ID);
+                            JSONObject broadcast = ClientMessage.getRoomChangeBroadcast(identity, "", RoomManager.MAINHALL_ID);
                             writer.write((broadcast.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
 
                             RoomManager.broadcastToChatRoom(clientState.getRoomId(), clientState.getClientId(), broadcast.toJSONString());
+                        } else {
+                            ClientManager.removeFromClientHandlerList(identity);
+                            isRunning = false;
                         }
                         writer.flush();
                         break;
