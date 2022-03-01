@@ -55,7 +55,7 @@ public class ClientHandler extends Thread{
     public void informServersNewClientId(String identity) {
         for (Server server : ServerState.getInstance().getServerListAsArrayList()) {
             if (!server.equals(ServerState.getInstance().getCoordinator())) {
-                logger.info("Send IamUp to: " + server.getServerId());
+                logger.info("Send informClientIdCreation to: " + server.getServerId());
                 try {
                     Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
                     DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());

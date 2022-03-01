@@ -95,7 +95,7 @@ public class MessageHandler {
 
     private void sendApproveClientIdMessage(Server server, String message) throws InterruptedException {
         logger.info("Send approveClientId to: " + server.getServerId());
-        Thread.sleep(1000L); // delay reply
+        //Thread.sleep(1000L); // delay reply
         try {
             Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
