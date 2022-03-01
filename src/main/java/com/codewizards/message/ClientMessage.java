@@ -34,6 +34,15 @@ public class ClientMessage {
         return getList;
     }
 
+    public static JSONObject getRoomContents(@NonNull String roomId, @NonNull String owner, @NonNull List<String> clientList) {
+        JSONObject roomContents = new JSONObject();
+        roomContents.put("type", "roomcontents");
+        roomContents.put("roomid", roomId);
+        roomContents.put("identities", clientList);
+        roomContents.put("owner", owner);
+        return roomContents;
+    }
+
     @SuppressWarnings("unchecked")
     public static JSONObject getCreateRoomResponse(@NonNull String roomId, @NonNull String approved) {
         JSONObject createRoom = new JSONObject();
