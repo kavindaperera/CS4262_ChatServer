@@ -46,10 +46,10 @@ public class FastBully {
 
     public String notifyIamUp(List<Server> serverList) {
         logger.info("IamUp!!!");
+        startViewMessageTimeout();
         for (Server server : serverList) {
             sendIamUpMessage(server);
         }
-        startViewMessageTimeout();
         return null;
     }
 

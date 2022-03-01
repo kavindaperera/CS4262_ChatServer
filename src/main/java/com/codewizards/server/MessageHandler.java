@@ -42,7 +42,7 @@ public class MessageHandler {
 
     public void respondToIamUpMessage(@NonNull Server server) throws InterruptedException {
         logger.info("Received IamUp from " + server.getServerId());
-        Thread.sleep(3000L); // delay reply
+//        Thread.sleep(3000L); // delay reply
         FastBully.getInstance().sendViewMessage(server);
         ServerState.getInstance().addServerToServerView(server);
     }
