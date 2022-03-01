@@ -19,6 +19,10 @@ public class ClientState {
     @Setter
     private Socket socket;
 
+    @Getter
+    @Setter
+    private String ownRoomId = "";
+
     public ClientState(String roomId, String clientId, Socket socket) {
         this.roomId = roomId;
         this.clientId = clientId;
