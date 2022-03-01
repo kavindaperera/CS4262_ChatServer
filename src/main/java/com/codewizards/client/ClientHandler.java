@@ -2,9 +2,12 @@ package com.codewizards.client;
 
 import com.codewizards.Main;
 import com.codewizards.message.ClientMessage;
+import com.codewizards.message.ServerMessage;
 import com.codewizards.room.RoomManager;
+import com.codewizards.server.Server;
 import com.codewizards.server.ServerHandler;
 
+import com.codewizards.server.ServerState;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.log4j.Logger;
@@ -49,6 +52,23 @@ public class ClientHandler extends Thread{
         ClientManager.addToGlobalClientsList(identity, Main.SERVER_ID);
     }
 
+    public void informServersNewClientId(String identity) {
+        for (Server server : ServerState.getInstance().getServerListAsArrayList()) {
+            if (!server.equals(ServerState.getInstance().getCoordinator())) {
+                logger.info("Send IamUp to: " + server.getServerId());
+                try {
+                    Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+                    DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                    dataOutputStream.write((ServerMessage.getInformClientIdCreationMessage(ServerState.getInstance().getOwnServer().getServerId(), identity) + "\n").getBytes(StandardCharsets.UTF_8));
+                    dataOutputStream.flush();
+
+                } catch (IOException e) {
+                    logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
+                }
+            }
+        }
+    }
+
     @Override
     public void run() {
         try {
@@ -75,6 +95,7 @@ public class ClientHandler extends Thread{
                         if (response.get("approved").toString().equalsIgnoreCase("true")) {
 
                             doUpdatesForClientId(identity);
+                            informServersNewClientId(identity);
 
                             JSONObject broadcast = ClientMessage.getRoomChangeBroadcast(identity, "", RoomManager.MAINHALL_ID);
                             writer.write((broadcast.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
