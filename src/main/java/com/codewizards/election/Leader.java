@@ -1,7 +1,7 @@
 package com.codewizards.election;
 
 import com.codewizards.Constants;
-import com.codewizards.message.ServerMessage;
+import com.codewizards.server.MessageSender;
 import com.codewizards.server.Server;
 import com.codewizards.server.ServerState;
 import io.reactivex.Observable;
@@ -12,11 +12,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import org.apache.log4j.Logger;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -79,12 +75,16 @@ public class Leader {
             @Override
             public void onNext(@NonNull Server server) {
                 logger.info("onNext: Send Leader Heartbeat to " + server.getServerId());
-                Leader.getInstance().sendHeartbeatMessage(server);
+                try {
+                    Leader.getInstance().sendHeartbeatMessage(server);
+                } catch (IOException ioException) {
+                    this.onError(ioException);
+                }
             }
 
             @Override
             public void onError(@NonNull Throwable throwable) {
-                logger.error("onError: ");
+                logger.error("onError: " + throwable.getMessage());
             }
 
             @Override
@@ -95,16 +95,8 @@ public class Leader {
 
     }
 
-    public void sendHeartbeatMessage(@NonNull Server server){
-        try {
-            Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
-            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            dataOutputStream.write((ServerMessage.getHeartbeatMessage(ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes(StandardCharsets.UTF_8));
-            dataOutputStream.flush();
-
-        } catch (IOException e) {
-            logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
-        }
+    public void sendHeartbeatMessage(Server server) throws IOException {
+        MessageSender.sendHeartbeatMessage(server);
     }
 
 }
