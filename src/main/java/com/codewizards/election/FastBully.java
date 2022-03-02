@@ -11,6 +11,7 @@ import lombok.NonNull;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,9 +26,13 @@ public class FastBully {
 
     private Disposable heartbeatWaitTimeoutDisposable;
 
+    private Disposable answerMessageTimeoutDisposable;
+
     private AtomicBoolean isWaitingForViewMessage = new AtomicBoolean(false);
 
     private AtomicBoolean viewMessagesReceived = new AtomicBoolean(false);
+
+    private AtomicBoolean isWaitingForAnswerMessage = new AtomicBoolean(false);
 
 
     private FastBully() {
@@ -42,7 +47,7 @@ public class FastBully {
 
     public String notifyIamUp(List<Server> serverList){
         logger.info("IamUp!!!");
-        startViewMessageTimeout();
+        startViewMessageTimeout(); // TODO - start timeout after sending
         for (Server server : serverList) {
             sendIamUpMessage(server);
         }
@@ -169,7 +174,6 @@ public class FastBully {
                                    public void onComplete() {
                                        logger.info("Heartbeat wait timeout completed!");
                                        logger.info("Leader heartbeat failure, Starting election");
-                                       // TODO - start election
                                        startElection();
                                        stopHeartbeatWaitTimeout();
                                    }
@@ -196,7 +200,16 @@ public class FastBully {
     }
 
     public void startElection() {
+        logger.info("Starting Election");
         ServerState.getInstance().removeServerFromServerView(ServerState.getInstance().getCoordinator()); // remove coordinator from view
+
+        List<Server> higherPriorityServers = ServerState.getInstance().getServersWithHigherPriority();
+
+        startAnswerMessageTimeout(); // TODO - start timeout after sending
+
+        for (Server server : higherPriorityServers){
+            sendElectionMessage(server);
+        }
 
     }
 
@@ -209,4 +222,48 @@ public class FastBully {
         }
     }
 
+    private void startAnswerMessageTimeout() {
+        answerMessageTimeoutDisposable = (Completable.timer(Constants.ANSWER_MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS)
+                .subscribeWith(new DisposableCompletableObserver() {
+                                   @Override
+                                   public void onStart() {
+                                       logger.info("Answer message timeout started!");
+                                       isWaitingForAnswerMessage.set(true);
+                                   }
+
+                                   @Override
+                                   public void onError(@NonNull Throwable error) {
+                                       logger.error(error.getMessage());
+                                   }
+
+                                   @Override
+                                   public void onComplete() {
+                                       logger.info("Answer message timeout completed!");
+
+                                   }
+                               }
+                )
+        );
+    }
+
+    public boolean isWaitingForAnswerMessage(){
+        return isWaitingForAnswerMessage.get();
+    }
+
+    public void stopAnswerMessageTimeout() {
+        if (isWaitingForAnswerMessage.get() && !answerMessageTimeoutDisposable.isDisposed()) {
+            logger.info("Answer message timeout stopped!");
+            isWaitingForAnswerMessage.set(false);
+            answerMessageTimeoutDisposable.dispose();
+        }
+    }
+
+    public void sendAnswerMessage(Server server) {
+        logger.info("Send answer message to: " + server.getServerId());
+        try {
+            MessageSender.sendAnswerMessage(server);
+        } catch (IOException e) {
+            logger.error(e.getLocalizedMessage());
+        }
+    }
 }
