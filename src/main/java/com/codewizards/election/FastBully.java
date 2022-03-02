@@ -1,7 +1,7 @@
 package com.codewizards.election;
 
 import com.codewizards.Constants;
-import com.codewizards.message.ServerMessage;
+import com.codewizards.server.MessageSender;
 import com.codewizards.server.Server;
 import com.codewizards.server.ServerState;
 import io.reactivex.Completable;
@@ -10,14 +10,10 @@ import io.reactivex.observers.DisposableCompletableObserver;
 import lombok.NonNull;
 import org.apache.log4j.Logger;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class FastBully {
 
@@ -32,7 +28,7 @@ public class FastBully {
     private AtomicBoolean isWaitingForViewMessage = new AtomicBoolean(false);
 
     private AtomicBoolean viewMessagesReceived = new AtomicBoolean(false);
-    
+
 
     private FastBully() {
     }
@@ -44,7 +40,7 @@ public class FastBully {
         return INSTANCE;
     }
 
-    public String notifyIamUp(List<Server> serverList) {
+    public String notifyIamUp(List<Server> serverList){
         logger.info("IamUp!!!");
         startViewMessageTimeout();
         for (Server server : serverList) {
@@ -56,47 +52,34 @@ public class FastBully {
     private void sendIamUpMessage(Server server) {
         logger.info("Send IamUp to: " + server.getServerId());
         try {
-            Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
-            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            dataOutputStream.write((ServerMessage.getIamUpMessage(ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes(StandardCharsets.UTF_8));
-            dataOutputStream.flush();
-
+            MessageSender.sendIamUpMessage(server);
         } catch (IOException e) {
-            logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
+            logger.error(e.getLocalizedMessage());
         }
     }
 
-    public void sendViewMessage(Server server) {
+    public void sendViewMessage(Server server){
         logger.info("Send view message to: " + server.getServerId());
         try {
-            Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
-            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            dataOutputStream.write((ServerMessage.getViewMessage(
-                    ServerState.getInstance().getOwnServer().getServerId(),
-                    ServerState.getInstance().getServerViewAsArrayList()) + "\n").getBytes(StandardCharsets.UTF_8));
-            dataOutputStream.flush();
-        } catch (Exception e) {
-            logger.error(e.getMessage() + ": " + server.getServerId());
+            MessageSender.sendViewMessage(server);
+        } catch (IOException e) {
+            logger.error(e.getLocalizedMessage());
         }
     }
 
-    public void notifyNewCoordinator(List<Server> lowerPriorityServers) {
+    public void notifyNewCoordinator(List<Server> lowerPriorityServers){
         for (Server server : lowerPriorityServers) {
             sendCoordinatorMessage(server);
         }
         setCoordinator(ServerState.getInstance().getOwnServer());
     }
 
-    public void sendCoordinatorMessage(Server server) {
+    public void sendCoordinatorMessage(Server server){
         logger.info("Send coordinator message to: " + server.getServerId());
         try {
-            Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
-            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            dataOutputStream.write((ServerMessage.getCoordinatorMessage(
-                    ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes(StandardCharsets.UTF_8));
-            dataOutputStream.flush();
-        } catch (Exception e) {
-            logger.error(e.getMessage() + ": " + server.getServerId());
+            MessageSender.sendCoordinatorMessage(server);
+        } catch (IOException e) {
+            logger.error(e.getLocalizedMessage());
         }
     }
 
@@ -212,7 +195,7 @@ public class FastBully {
         startHeartbeatWaitTimeout();
     }
 
-    public void startElection(){
+    public void startElection() {
         ServerState.getInstance().removeServerFromServerView(ServerState.getInstance().getCoordinator()); // remove coordinator from view
     }
 
