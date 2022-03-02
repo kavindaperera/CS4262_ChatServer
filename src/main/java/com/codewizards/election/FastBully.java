@@ -197,6 +197,16 @@ public class FastBully {
 
     public void startElection() {
         ServerState.getInstance().removeServerFromServerView(ServerState.getInstance().getCoordinator()); // remove coordinator from view
+
+    }
+
+    private void sendElectionMessage(Server server) {
+        logger.info("Send election message to: " + server.getServerId());
+        try {
+            MessageSender.sendElectionMessage(server);
+        } catch (IOException e) {
+            logger.error(e.getLocalizedMessage());
+        }
     }
 
 }
