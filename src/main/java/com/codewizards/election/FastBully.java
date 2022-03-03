@@ -12,6 +12,8 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -25,9 +27,19 @@ public class FastBully {
 
     private Disposable heartbeatWaitTimeoutDisposable;
 
+    private Disposable answerMessageTimeoutDisposable;
+
     private AtomicBoolean isWaitingForViewMessage = new AtomicBoolean(false);
 
     private AtomicBoolean viewMessagesReceived = new AtomicBoolean(false);
+
+    private AtomicBoolean isWaitingForAnswerMessage = new AtomicBoolean(false);
+
+    private final ConcurrentNavigableMap<Server, Boolean> answerStatus = new ConcurrentSkipListMap<>();
+
+    private AtomicBoolean answerMessageReceived = new AtomicBoolean(false);
+
+    private AtomicBoolean electionReady = new AtomicBoolean(true);
 
 
     private FastBully() {
@@ -42,7 +54,7 @@ public class FastBully {
 
     public String notifyIamUp(List<Server> serverList){
         logger.info("IamUp!!!");
-        startViewMessageTimeout();
+        startViewMessageTimeout(); // TODO - start timeout after sending
         for (Server server : serverList) {
             sendIamUpMessage(server);
         }
@@ -169,7 +181,6 @@ public class FastBully {
                                    public void onComplete() {
                                        logger.info("Heartbeat wait timeout completed!");
                                        logger.info("Leader heartbeat failure, Starting election");
-                                       // TODO - start election
                                        startElection();
                                        stopHeartbeatWaitTimeout();
                                    }
@@ -184,6 +195,7 @@ public class FastBully {
     }
 
     private synchronized void stopHeartbeatWaitTimeout() {
+        logger.info("Stop Heartbeat wait timeout!");
         if (heartbeatWaitTimeoutDisposable != null && !heartbeatWaitTimeoutDisposable.isDisposed()) {
             heartbeatWaitTimeoutDisposable.dispose();
         }
@@ -196,7 +208,20 @@ public class FastBully {
     }
 
     public void startElection() {
+        logger.info("Starting Election");
         ServerState.getInstance().removeServerFromServerView(ServerState.getInstance().getCoordinator()); // remove coordinator from view
+
+        List<Server> higherPriorityServers = ServerState.getInstance().getServersWithHigherPriority();
+
+        isWaitingForAnswerMessage.set(true);
+        answerMessageReceived.set(false);
+        electionReady.set(false);
+
+        startAnswerMessageTimeout(); // TODO - start timeout after sending
+
+        for (Server server : higherPriorityServers){
+            sendElectionMessage(server);
+        }
 
     }
 
@@ -209,4 +234,76 @@ public class FastBully {
         }
     }
 
+    private void startAnswerMessageTimeout() {
+        answerMessageTimeoutDisposable = (Completable.timer(Constants.ANSWER_MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS)
+                .subscribeWith(new DisposableCompletableObserver() {
+                                   @Override
+                                   public void onStart() {
+                                       logger.info("Answer message timeout started!");
+                                   }
+
+                                   @Override
+                                   public void onError(@NonNull Throwable error) {
+                                       logger.error(error.getMessage());
+                                   }
+
+                                   @Override
+                                   public void onComplete() {
+                                       logger.info("Answer message timeout completed!");
+                                       if (!answerMessageReceived.get()) {
+                                           logger.info("No answer messages received");
+                                           // sends a coordinator message to other processes with lower priority number
+                                           FastBully.getInstance().notifyNewCoordinator(ServerState.getInstance().getServersWithLowerPriority());
+
+                                           // stops its election procedure
+                                           electionReady.set(true);
+                                       } else {
+                                           FastBully.getInstance().sendNominationMessage(answerStatus.pollFirstEntry().getKey());
+                                           // TODO - wait for coordinator message
+                                       }
+                                       stopAnswerMessageTimeout();
+                                   }
+                               }
+                )
+        );
+    }
+
+    public boolean isWaitingForAnswerMessage(){
+        return isWaitingForAnswerMessage.get();
+    }
+
+    public void setAnswerMessageReceived(@NonNull Server server, @NonNull Boolean z) {
+        answerMessageReceived.set(z);
+        answerStatus.put(server, Boolean.TRUE);
+    }
+
+    public void stopAnswerMessageTimeout() {
+        if (isWaitingForAnswerMessage.get() && !answerMessageTimeoutDisposable.isDisposed()) {
+            logger.info("Answer message timeout stopped!");
+            isWaitingForAnswerMessage.set(false);
+            answerMessageTimeoutDisposable.dispose();
+        }
+    }
+
+    public void sendAnswerMessage(Server server) {
+        logger.info("Send answer message to: " + server.getServerId());
+        try {
+            MessageSender.sendAnswerMessage(server);
+        } catch (IOException e) {
+            logger.error(e.getLocalizedMessage());
+        }
+    }
+
+    public void sendNominationMessage(Server server) {
+        logger.info("Send nomination message to: " + server.getServerId());
+        try {
+            MessageSender.sendNominationMessage(server);
+        } catch (IOException e) {
+            logger.error(e.getLocalizedMessage());
+        }
+    }
+
+    public void setElectionReady(@NonNull Boolean z){
+        electionReady.set(z);
+    }
 }

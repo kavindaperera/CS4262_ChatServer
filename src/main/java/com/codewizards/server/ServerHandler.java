@@ -41,15 +41,15 @@ public class ServerHandler extends Thread{
 
             switch (type) {
                 case "election": {
-                    this.messageHandler.respondToElectionMessage();
+                    this.messageHandler.respondToElectionMessage(server);
                     break;
                 }
                 case "answer": {
-                    this.messageHandler.respondToAnswerMessage();
+                    this.messageHandler.respondToAnswerMessage(server);
                     break;
                 }
                 case "nomination": {
-                    this.messageHandler.respondToNominationMessage();
+                    this.messageHandler.respondToNominationMessage(server);
                     break;
                 }
                 case "coordinator": {

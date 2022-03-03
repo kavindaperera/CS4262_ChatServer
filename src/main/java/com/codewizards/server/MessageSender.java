@@ -44,4 +44,18 @@ public class MessageSender {
         dataOutputStream.write((ServerMessage.getElectionMessage(ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes(StandardCharsets.UTF_8));
         dataOutputStream.flush();
     }
+
+    public static void sendAnswerMessage(@NonNull Server server) throws IOException {
+        Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        dataOutputStream.write((ServerMessage.getAnswerMessage(ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes(StandardCharsets.UTF_8));
+        dataOutputStream.flush();
+    }
+
+    public static void sendNominationMessage(@NonNull Server server) throws IOException {
+        Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        dataOutputStream.write((ServerMessage.getNominationMessage(ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes(StandardCharsets.UTF_8));
+        dataOutputStream.flush();
+    }
 }
