@@ -80,15 +80,15 @@ public class MessageHandler {
     public JSONObject respondToCreateRoomRequest(String roomId, ClientState clientState) {
         logger.info("Client requested to create new Room => " + roomId);
 
-        if (clientState.getOwnRoomId().equalsIgnoreCase("")) {
-            if (RoomManager.checkRoomIdAvailability(roomId)) {
-                if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
-                    sendRequestRoomIdApprovalMessage(ServerState.getInstance().getCoordinator(), roomId, clientState.getClientId());
-                    startIdApprovalTimeout();
-                } else {
-                    idApprovalReceived = true;
-                }
+        if (clientState.getOwnRoomId().equalsIgnoreCase("") && RoomManager.checkRoomIdAvailability(roomId)) {
+            if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
+                sendRequestRoomIdApprovalMessage(ServerState.getInstance().getCoordinator(), roomId, clientState.getClientId());
+                startIdApprovalTimeout();
+            } else {
+                idApprovalReceived = true;
             }
+        } else {
+            idApprovalReceived = false;
         }
 
         if (isWaitingForIdApproval) {
