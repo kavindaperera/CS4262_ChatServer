@@ -69,6 +69,34 @@ public class ClientHandler extends Thread{
         }
     }
 
+    public String doUpdatesForRoomId(String roomId, String clientId){
+        String previousRoom = this.clientState.getRoomId();
+        RoomManager.getLocalRoomsList().get(previousRoom).getClientHashMap().remove(clientId);
+        RoomManager.createChatRoom(roomId, clientId);
+        this.clientState.setRoomId(roomId);
+        this.clientState.setOwnRoomId(roomId);
+        RoomManager.getLocalRoomsList().get(roomId).getClientHashMap().put(clientId, this.clientState);
+
+        return previousRoom;
+    }
+
+    public void informServersNewRoomId(String roomId) {
+        for (Server server : ServerState.getInstance().getServerListAsArrayList()) {
+            if (!server.equals(ServerState.getInstance().getCoordinator())) {
+                logger.info("Send informRoomIdCreation to: " + server.getServerId());
+                try {
+                    Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+                    DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                    dataOutputStream.write((ServerMessage.getInformRoomIdCreationMessage(ServerState.getInstance().getOwnServer().getServerId(), roomId) + "\n").getBytes(StandardCharsets.UTF_8));
+                    dataOutputStream.flush();
+
+                } catch (IOException e) {
+                    logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
+                }
+            }
+        }
+    }
+
     @Override
     public void run() {
         try {
@@ -127,7 +155,14 @@ public class ClientHandler extends Thread{
                         writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
 
                         if (response.get("approved").toString().equalsIgnoreCase("true")) {
-                            // need to do relevant updates
+
+                            String previousRoom = doUpdatesForRoomId(roomId, clientState.getClientId());
+                            informServersNewRoomId(roomId);
+
+                            JSONObject broadcast = ClientMessage.getRoomChangeBroadcast(clientState.getClientId(), previousRoom, roomId);
+                            writer.write((broadcast.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+
+                            RoomManager.broadcastToChatRoom(previousRoom, clientState.getClientId(), broadcast.toJSONString());
                         }
                         writer.flush();
                         break;
