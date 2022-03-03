@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Room {
 
@@ -20,7 +21,7 @@ public class Room {
     @Getter
     private String creatorId;
 
-    private final HashMap<String, ClientState> clientHashMap = new HashMap<>();
+    private final ConcurrentHashMap<String, ClientState> clientHashMap = new ConcurrentHashMap<>();
 
 
     /**
@@ -33,17 +34,19 @@ public class Room {
         this.creatorId = creatorId;
     }
 
-    public HashMap<String, ClientState> getClientHashMap() {
+    public ConcurrentHashMap<String, ClientState> getClientHashMap() {
         return clientHashMap;
     }
 
     public List<String> getClientsAsList() {
-        Iterator<ClientState> clientStateList = clientHashMap.values().iterator();
-        List<String> clientList = new ArrayList<>();
-        while (clientStateList.hasNext()) {
-            clientList.add(clientStateList.next().getClientId());
+        synchronized (clientHashMap) {
+            Iterator<ClientState> clientStateList = clientHashMap.values().iterator();
+            List<String> clientList = new ArrayList<>();
+            while (clientStateList.hasNext()) {
+                clientList.add(clientStateList.next().getClientId());
+            }
+            return clientList;
         }
-        return clientList;
     }
 
     /**
@@ -51,22 +54,24 @@ public class Room {
      * @param message
      */
     public void sendBroadcast(String sender, String message) {
-        Iterator<String> clientList = clientHashMap.keySet().iterator();
-        DataOutputStream writer;
-        String clientId;
-        ClientState clientState;
-        while (clientList.hasNext()) {
-            try {
-                clientId = clientList.next();
-                if (!clientId.equalsIgnoreCase(sender)) {
-                    clientState = clientHashMap.get(clientId);
-                    writer = new DataOutputStream(clientState.getSocket().getOutputStream());
-                    writer.write((message + "\n").getBytes(StandardCharsets.UTF_8));
-                    writer.flush();
-                    writer = null;
+        synchronized (clientHashMap) {
+            Iterator<String> clientList = clientHashMap.keySet().iterator();
+            DataOutputStream writer;
+            String clientId;
+            ClientState clientState;
+            while (clientList.hasNext()) {
+                try {
+                    clientId = clientList.next();
+                    if (!clientId.equalsIgnoreCase(sender)) {
+                        clientState = clientHashMap.get(clientId);
+                        writer = new DataOutputStream(clientState.getSocket().getOutputStream());
+                        writer.write((message + "\n").getBytes(StandardCharsets.UTF_8));
+                        writer.flush();
+                        writer = null;
+                    }
+                } catch (IOException e) {
+                    System.out.println("Communication Error: " + e.getMessage());
                 }
-            } catch (IOException e) {
-                System.out.println("Communication Error: " + e.getMessage());
             }
         }
     }
