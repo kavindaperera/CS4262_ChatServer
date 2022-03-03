@@ -24,21 +24,36 @@ public class MessageHandler {
 
     }
 
-    public void respondToElectionMessage() {
-
+    public void respondToElectionMessage(@NonNull Server server) {
+        logger.debug("Received election message from: " + server.getServerId());
+        FastBully.getInstance().sendAnswerMessage(server);
     }
 
-    public void respondToNominationMessage() {
+    public void respondToNominationMessage(@NonNull Server server) {
+        logger.debug("Received nomination message from: " + server.getServerId());
 
+        // sends a coordinator message to all the processes with lower priority numbers
+        FastBully.getInstance().notifyNewCoordinator(ServerState.getInstance().getServersWithLowerPriority());
+
+        // stops its election procedure
+        FastBully.getInstance().setElectionReady(true);
     }
 
-    public void respondToAnswerMessage() {
-
+    public void respondToAnswerMessage(@NonNull Server server) {
+        logger.debug("Received answer message from: " + server.getServerId());
+        if (FastBully.getInstance().isWaitingForAnswerMessage()){
+            FastBully.getInstance().setAnswerMessageReceived(server, true);
+        }
     }
 
     public void respondToCoordinatorMessage(@NonNull Server server) {
         logger.info("Received coordinator message from " + server.getServerId());
+
+        // admit the new coordinator.
         FastBully.getInstance().setCoordinator(server);
+
+        // stops its election procedure
+        FastBully.getInstance().setElectionReady(true);
     }
 
     public void respondToIamUpMessage(@NonNull Server server) throws InterruptedException {
