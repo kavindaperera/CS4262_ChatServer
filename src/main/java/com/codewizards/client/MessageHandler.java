@@ -7,6 +7,7 @@ import com.codewizards.room.Room;
 import com.codewizards.room.RoomManager;
 import com.codewizards.server.Server;
 import com.codewizards.server.ServerState;
+import com.codewizards.utils.Utils;
 import io.reactivex.Completable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observers.DisposableCompletableObserver;
@@ -45,13 +46,17 @@ public class MessageHandler {
     public JSONObject respondToIdentityRequest(String identity) {
         logger.info("Client requested for identity => " + identity);
 
-        if(ClientManager.checkClientIdentityAvailability(identity)) {
-            if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
-                sendRequestClientIdApprovalMessage(ServerState.getInstance().getCoordinator(), identity);
-                startIdApprovalTimeout();
-            } else {
-                idApprovalReceived = true;
+        if (Utils.validateIdentifier(identity)) {
+            if (ClientManager.checkClientIdentityAvailability(identity)) {
+                if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
+                    sendRequestClientIdApprovalMessage(ServerState.getInstance().getCoordinator(), identity);
+                    startIdApprovalTimeout();
+                } else {
+                    idApprovalReceived = true;
+                }
             }
+        } else {
+            idApprovalReceived = false;
         }
 
         if (isWaitingForIdApproval) {
@@ -80,12 +85,16 @@ public class MessageHandler {
     public JSONObject respondToCreateRoomRequest(String roomId, ClientState clientState) {
         logger.info("Client requested to create new Room => " + roomId);
 
-        if (clientState.getOwnRoomId().equalsIgnoreCase("") && RoomManager.checkRoomIdAvailability(roomId)) {
-            if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
-                sendRequestRoomIdApprovalMessage(ServerState.getInstance().getCoordinator(), roomId, clientState.getClientId());
-                startIdApprovalTimeout();
+        if (Utils.validateIdentifier(roomId)) {
+            if (clientState.getOwnRoomId().equalsIgnoreCase("") && RoomManager.checkRoomIdAvailability(roomId)) {
+                if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
+                    sendRequestRoomIdApprovalMessage(ServerState.getInstance().getCoordinator(), roomId, clientState.getClientId());
+                    startIdApprovalTimeout();
+                } else {
+                    idApprovalReceived = true;
+                }
             } else {
-                idApprovalReceived = true;
+                idApprovalReceived = false;
             }
         } else {
             idApprovalReceived = false;
@@ -190,7 +199,7 @@ public class MessageHandler {
 
     */
 
-    private void startIdApprovalTimeout(){
+    private void startIdApprovalTimeout() {
         isWaitingForIdApproval = true;
         long start = System.currentTimeMillis();
         long elapsedTime = 0L;
