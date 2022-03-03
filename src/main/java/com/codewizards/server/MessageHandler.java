@@ -132,6 +132,13 @@ public class MessageHandler {
         ClientManager.getClientHandler(clientId).getMessageHandler().setWaitingForIdApproval(false);
     }
 
+    public void respondToInformRoomIdCreationMessage(JSONObject receivedMessage) {
+        String serverId = (String) receivedMessage.get("serverId");
+        String identity = (String) receivedMessage.get("identity");
+
+        RoomManager.addToGlobalRoomsList(identity, serverId);
+    }
+
 
     private void sendApproveClientIdMessage(Server server, String message) throws InterruptedException {
         logger.info("Send approveClientId to: " + server.getServerId());
