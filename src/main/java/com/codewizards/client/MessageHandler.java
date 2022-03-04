@@ -109,8 +109,21 @@ public class MessageHandler {
         return response;
     }
 
-    public void respondToJoinRoomRequest() {
+    public JSONObject respondToJoinRoomRequest(String roomId, ClientState clientState) {
+        logger.info("Client requested to join Room => " + roomId);
+        JSONObject response;
+        if (clientState.getOwnRoomId().equalsIgnoreCase("") && !RoomManager.checkRoomIdAvailability(roomId)) {
+            if (!RoomManager.checkLocalRoomIdAvailability(roomId)) {
+                response = ClientMessage.getRoomChangeBroadcast(clientState.getClientId(), clientState.getRoomId(), roomId);
+            } else {
+                Server server = ServerState.getInstance().getServerByServerId(RoomManager.getServerOfRoom(roomId));
+                response = ClientMessage.getRouteResponse(roomId, server.getServerAddress(), server.getClientPort());
+            }
+        } else {
+            response = ClientMessage.getRoomChangeBroadcast(clientState.getClientId(), roomId, roomId);
+        }
 
+        return response;
     }
 
     public void respondToDeleteRoomRequest() {

@@ -168,7 +168,23 @@ public class ClientHandler extends Thread{
                         break;
                     }
                     case "joinroom": {
-                        this.messageHandler.respondToJoinRoomRequest();
+                        String roomId = (String) receivedMessage.get("roomid");
+                        JSONObject response = this.messageHandler.respondToJoinRoomRequest(roomId, clientState);
+                        writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+
+                        if (!response.get("type").toString().equalsIgnoreCase("route")) {
+                            if (!response.get("former").toString().equalsIgnoreCase(response.get("roomid").toString())) {
+
+                                RoomManager.broadcastToChatRoom(clientState.getRoomId(), clientState.getClientId(), response.toJSONString());
+                                RoomManager.getLocalRoomsList().get(clientState.getRoomId()).getClientHashMap().remove(clientState.getClientId());
+                                clientState.setRoomId(roomId);
+                                RoomManager.getLocalRoomsList().get(roomId).getClientHashMap().put(clientState.getClientId(), clientState);
+                                RoomManager.broadcastToChatRoom(clientState.getRoomId(), clientState.getClientId(), response.toJSONString());
+                            }
+                        } else {
+                            // remove client and broadcast to previous room
+                        }
+
                         break;
                     }
                     case "deleteroom": {
