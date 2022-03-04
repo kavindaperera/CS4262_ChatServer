@@ -52,6 +52,15 @@ public class ClientMessage {
         return createRoom;
     }
 
+    public static JSONObject getRouteResponse(@NonNull String roomId, @NonNull String host, @NonNull int port) {
+        JSONObject route = new JSONObject();
+        route.put("type", "route");
+        route.put("roomid", roomId);
+        route.put("host", host);
+        route.put("port", port);
+        return route;
+    }
+
     @SuppressWarnings("unchecked")
     public static JSONObject getServerChange(@NonNull String approved, @NonNull String serverId) {
         JSONObject serverChange = new JSONObject();
