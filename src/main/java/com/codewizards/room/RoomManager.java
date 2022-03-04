@@ -65,6 +65,18 @@ public class RoomManager {
         }
     }
 
+    public static boolean checkLocalRoomIdAvailability(String requestedRoomID) {
+        synchronized (localRoomsList) {
+            return !localRoomsList.containsKey(requestedRoomID);
+        }
+    }
+
+   public static String getServerOfRoom(String roomId) {
+        synchronized (globalRoomsList) {
+            return globalRoomsList.get(roomId);
+        }
+    }
+
     public static void addToGlobalRoomsList(String roomID, String serverID) {
         synchronized (globalRoomsList) {
             globalRoomsList.put(roomID, serverID);
