@@ -97,6 +97,13 @@ public class ClientHandler extends Thread{
         }
     }
 
+    public void doUpdatesForMoveJoin(JSONObject tempMessage){
+        this.clientState = new ClientState(tempMessage.get("roomid").toString(), tempMessage.get("identity").toString(), clientSocket);
+        RoomManager.getLocalRoomsList().get(tempMessage.get("roomid").toString()).getClientHashMap().put(tempMessage.get("identity").toString(), this.clientState);
+        ClientManager.addToLocalClientsList(tempMessage.get("identity").toString());
+        ClientManager.addToGlobalClientsList(tempMessage.get("identity").toString(), Main.SERVER_ID);
+    }
+
     @Override
     public void run() {
         try {
@@ -174,17 +181,45 @@ public class ClientHandler extends Thread{
 
                         if (!response.get("type").toString().equalsIgnoreCase("route")) {
                             if (!response.get("former").toString().equalsIgnoreCase(response.get("roomid").toString())) {
-
+                                // broadcast to previous room & remove from it
                                 RoomManager.broadcastToChatRoom(clientState.getRoomId(), clientState.getClientId(), response.toJSONString());
                                 RoomManager.getLocalRoomsList().get(clientState.getRoomId()).getClientHashMap().remove(clientState.getClientId());
+                                // add to new room & broadcast to it
                                 clientState.setRoomId(roomId);
                                 RoomManager.getLocalRoomsList().get(roomId).getClientHashMap().put(clientState.getClientId(), clientState);
                                 RoomManager.broadcastToChatRoom(clientState.getRoomId(), clientState.getClientId(), response.toJSONString());
                             }
                         } else {
-                            // remove client and broadcast to previous room
+                            JSONObject broadcast = ClientMessage.getRoomChangeBroadcast(clientState.getClientId(), clientState.getRoomId(), roomId);
+                            RoomManager.broadcastToChatRoom(clientState.getRoomId(), clientState.getClientId(), broadcast.toJSONString());
+
+                            // remove from previous room's client list and server's client list
+                            RoomManager.getLocalRoomsList().get(clientState.getRoomId()).getClientHashMap().remove(clientState.getClientId());
+                            ClientManager.removeFromLocalClientList(clientState.getClientId());
+
+                            ClientManager.removeFromClientHandlerList(clientState.getClientId());
+                            isRunning = false;
                         }
 
+                        break;
+                    }
+                    case "movejoin": {
+                        String former = (String) receivedMessage.get("former");
+                        String roomId = (String) receivedMessage.get("roomid");
+                        String identity = (String) receivedMessage.get("identity");
+                        ClientManager.addToClientHandlersList(identity, this);
+
+                        JSONObject response = this.messageHandler.respondToMoveJoinRequest(former, roomId, identity);
+
+                        doUpdatesForMoveJoin(response);
+                        RoomManager.broadcastToChatRoom(clientState.getRoomId(), clientState.getClientId(), response.toJSONString());
+
+                        if (response.get("roomid").toString().equalsIgnoreCase(roomId)) {
+                            JSONObject serverChange = ClientMessage.getServerChange("true", Main.SERVER_ID);
+                            writer.write((serverChange.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+                            writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+                        }
+                        writer.flush();
                         break;
                     }
                     case "deleteroom": {
