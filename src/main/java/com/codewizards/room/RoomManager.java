@@ -83,6 +83,12 @@ public class RoomManager {
         }
     }
 
+    public static void removeFromGlobalRoomsList(String roomId) {
+        synchronized (globalRoomsList) {
+            globalRoomsList.remove(roomId);
+        }
+    }
+
     public static void initializeGlobalRoomsList() {
         Iterator<String> serverList = ServerState.getInstance().getServerList().keySet().iterator();
         while (serverList.hasNext()) {

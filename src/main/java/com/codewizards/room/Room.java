@@ -76,4 +76,20 @@ public class Room {
         }
     }
 
+    public void changeRoomOfClients(String deleter) {
+        synchronized (clientHashMap) {
+            Iterator<String> clientList = clientHashMap.keySet().iterator();
+            String clientId;
+            ClientState clientState;
+            while (clientList.hasNext()) {
+                clientId = clientList.next();
+                if (!clientId.equalsIgnoreCase(deleter)) {
+                    clientState = clientHashMap.get(clientId);
+                    clientState.setRoomId(RoomManager.MAINHALL_ID);
+                    RoomManager.getLocalRoomsList().get(RoomManager.MAINHALL_ID).getClientHashMap().put(clientState.getClientId(),clientState);
+                }
+            }
+        }
+    }
+
 }
