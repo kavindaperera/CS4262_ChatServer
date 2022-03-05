@@ -144,6 +144,14 @@ public class ServerMessage {
         return informRoomIdCreation;
     }
 
+    public static JSONObject getInformRoomIdDeletionMessage(@NonNull String serverId, @NonNull String roomId) {
+        JSONObject informRoomIdDeletion = new JSONObject();
+        informRoomIdDeletion.put("type", "deleteroom");
+        informRoomIdDeletion.put("serverId", serverId);
+        informRoomIdDeletion.put("roomid", roomId);
+        return informRoomIdDeletion;
+    }
+
     /**
      * @param serverId server identifier
      * @return heartbeat message
