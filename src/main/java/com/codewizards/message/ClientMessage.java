@@ -52,7 +52,7 @@ public class ClientMessage {
         return createRoom;
     }
 
-    public static JSONObject getRouteResponse(@NonNull String roomId, @NonNull String host, @NonNull int port) {
+    public static JSONObject getRouteResponse(@NonNull String roomId, @NonNull String host, @NonNull String port) {
         JSONObject route = new JSONObject();
         route.put("type", "route");
         route.put("roomid", roomId);
