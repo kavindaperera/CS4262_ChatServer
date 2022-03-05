@@ -137,8 +137,16 @@ public class MessageHandler {
         return response;
     }
 
-    public void respondToDeleteRoomRequest() {
+    public JSONObject respondToDeleteRoomRequest(String roomId, ClientState clientState) {
+        logger.info("Client requested to delete Room => " + roomId);
+        JSONObject response;
+        if (clientState.getOwnRoomId().equalsIgnoreCase(roomId)) {
+            response = ClientMessage.getDeleteRoomResponse(roomId, "true");
+        } else {
+            response = ClientMessage.getDeleteRoomResponse(roomId, "false");
+        }
 
+        return response;
     }
 
     public void respondToQuitRequest() {
