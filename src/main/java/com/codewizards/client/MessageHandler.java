@@ -117,10 +117,21 @@ public class MessageHandler {
                 response = ClientMessage.getRoomChangeBroadcast(clientState.getClientId(), clientState.getRoomId(), roomId);
             } else {
                 Server server = ServerState.getInstance().getServerByServerId(RoomManager.getServerOfRoom(roomId));
-                response = ClientMessage.getRouteResponse(roomId, server.getServerAddress(), server.getClientPort());
+                response = ClientMessage.getRouteResponse(roomId, server.getServerAddress(), String.valueOf(server.getClientPort()));
             }
         } else {
             response = ClientMessage.getRoomChangeBroadcast(clientState.getClientId(), roomId, roomId);
+        }
+
+        return response;
+    }
+
+    public JSONObject respondToMoveJoinRequest(String former, String roomId, String identity){
+        JSONObject response;
+        if (!RoomManager.checkLocalRoomIdAvailability(roomId)) {
+            response = ClientMessage.getRoomChangeBroadcast(identity, former, roomId);
+        } else {
+            response = ClientMessage.getRoomChangeBroadcast(identity, former, RoomManager.MAINHALL_ID);
         }
 
         return response;
