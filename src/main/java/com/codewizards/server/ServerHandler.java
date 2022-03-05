@@ -88,6 +88,10 @@ public class ServerHandler extends Thread{
                     this.messageHandler.respondToInformRoomIdCreationMessage(message);
                     break;
                 }
+                case "deleteroom": {
+                    this.messageHandler.respondToInformRoomIdDeletionMessage(message);
+                    break;
+                }
                 case "heartbeat":{
                     logger.debug("Received heartbeat message from: " + message);
                     if (server.equals(ServerState.getInstance().getCoordinator()) && !server.equals(ServerState.getInstance().getOwnServer())){
