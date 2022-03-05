@@ -29,18 +29,19 @@ public class FastBully {
 
     private Disposable answerMessageTimeoutDisposable;
 
+    private Disposable coordinatorMessageTimeoutDisposable;
+
     private AtomicBoolean isWaitingForViewMessage = new AtomicBoolean(false);
 
     private AtomicBoolean viewMessagesReceived = new AtomicBoolean(false);
 
     private AtomicBoolean isWaitingForAnswerMessage = new AtomicBoolean(false);
 
-    private final ConcurrentNavigableMap<Server, Boolean> answerStatus = new ConcurrentSkipListMap<>();
-
     private AtomicBoolean answerMessageReceived = new AtomicBoolean(false);
 
     private AtomicBoolean electionReady = new AtomicBoolean(true);
 
+    private final ConcurrentNavigableMap<Server, Boolean> answerStatus = new ConcurrentSkipListMap<>();
 
     private FastBully() {
     }
@@ -113,8 +114,22 @@ public class FastBully {
                                    public void onComplete() {
                                        logger.info("View message timeout completed!");
                                        if (!viewMessagesReceived.get()) {
-                                           logger.info("Self set new coordinator");
+                                           // stops the procedure
+                                           logger.info("No view messages received, self set new coordinator");
                                            setCoordinator(ServerState.getInstance().getOwnServer());
+
+                                       } else {
+                                           Server highestPriorityServer = ServerState.getInstance().getHighestPriorityServer();
+                                           if (highestPriorityServer.getServerId().equalsIgnoreCase(ServerState.getInstance().getOwnServer().getServerId())){
+                                               logger.info("I am the highest priority numbered process");
+                                               // send coordinator message to lower priority servers
+                                               FastBully.getInstance().notifyNewCoordinator(ServerState.getInstance().getServersWithLowerPriority());
+                                               // stops the procedure
+                                           } else{
+                                               // admit the highest priority numbered process as the coordinator
+                                               FastBully.getInstance().setCoordinator(highestPriorityServer);
+                                               // stop election procedure
+                                           }
                                        }
                                        stopViewMessageTimeout();
                                    }
@@ -146,14 +161,14 @@ public class FastBully {
             } else {
                 logger.info("I'm the coordinator");
                 ServerState.getInstance().setCoordinator(coordinator);
-                Leader.getInstance().startHeartbeat();
+                Leader.getInstance().startHeartbeat(); // start leader heartbeat
             }
         } else {
             if (ServerState.getInstance().getCoordinator() == null) { // first time
                 logger.info("Set " + coordinator.getServerId() + " as coordinator");
                 ServerState.getInstance().setCoordinator(coordinator);
-            } else if (!ServerState.getInstance().getCoordinator().equals(coordinator)) { // update
-                if (ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) { // stop leader heartbeat if I'm the coordinator
+            } else if (!ServerState.getInstance().getCoordinator().equals(coordinator)) { // update coordinator
+                if (ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) { // stop leader heartbeat if own server the current coordinator
                     Leader.deleteInstance();
                 }
                 logger.info("Update " + coordinator.getServerId() + " as coordinator");
@@ -195,8 +210,8 @@ public class FastBully {
     }
 
     private synchronized void stopHeartbeatWaitTimeout() {
-        logger.info("Stop Heartbeat wait timeout!");
         if (heartbeatWaitTimeoutDisposable != null && !heartbeatWaitTimeoutDisposable.isDisposed()) {
+            logger.info("Stop Heartbeat wait timeout!");
             heartbeatWaitTimeoutDisposable.dispose();
         }
     }
@@ -258,8 +273,12 @@ public class FastBully {
                                            // stops its election procedure
                                            electionReady.set(true);
                                        } else {
+                                           // determines the highest priority number of the answering processes
+                                           // and sends a nomination message to that process.
                                            FastBully.getInstance().sendNominationMessage(answerStatus.pollFirstEntry().getKey());
-                                           // TODO - wait for coordinator message
+
+                                           // waits for a coordinator message for the interval T3.
+                                           FastBully.getInstance().starCoordinatorMessageTimeout();
                                        }
                                        stopAnswerMessageTimeout();
                                    }
@@ -277,7 +296,7 @@ public class FastBully {
         answerStatus.put(server, Boolean.TRUE);
     }
 
-    public void stopAnswerMessageTimeout() {
+    public synchronized void stopAnswerMessageTimeout() {
         if (isWaitingForAnswerMessage.get() && !answerMessageTimeoutDisposable.isDisposed()) {
             logger.info("Answer message timeout stopped!");
             isWaitingForAnswerMessage.set(false);
@@ -303,7 +322,34 @@ public class FastBully {
         }
     }
 
-    public void setElectionReady(@NonNull Boolean z){
+    public synchronized void setElectionReady(@NonNull Boolean z){
         electionReady.set(z);
+
+        if (z) {
+            // TODO - stop all timeouts
+        }
+    }
+
+    private synchronized void starCoordinatorMessageTimeout() {
+        coordinatorMessageTimeoutDisposable = (Completable.timer(Constants.COORDINATOR_MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS)
+                .subscribeWith(new DisposableCompletableObserver() {
+                                   @Override
+                                   public void onStart() {
+                                       logger.info("Coordinator message timeout started!");
+                                   }
+
+                                   @Override
+                                   public void onError(@NonNull Throwable error) {
+                                       logger.error(error.getMessage());
+                                   }
+
+                                   @Override
+                                   public void onComplete() {
+                                       logger.info("Coordinator message timeout completed!");
+
+                                   }
+                               }
+                )
+        );
     }
 }
