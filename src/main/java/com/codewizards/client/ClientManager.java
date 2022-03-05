@@ -63,4 +63,10 @@ public class ClientManager {
         }
     }
 
+    public static void removeFromLocalClientList(String clientID) {
+        synchronized (localClientsList) {
+            localClientsList.remove(clientID);
+        }
+    }
+
 }
