@@ -29,7 +29,7 @@ public class MessageHandler {
         FastBully.getInstance().sendAnswerMessage(server);
     }
 
-    public void respondToNominationMessage(@NonNull Server server) {
+    public void respondToNominationMessage(@NonNull Server server) throws InterruptedException {
         logger.debug("Received nomination message from: " + server.getServerId());
 
         // sends a coordinator message to all the processes with lower priority numbers
@@ -48,12 +48,15 @@ public class MessageHandler {
 
     public void respondToCoordinatorMessage(@NonNull Server server) {
         logger.info("Received coordinator message from " + server.getServerId());
+        FastBully.getInstance().setCoordinatorMessageReceived(true);
 
         // admit the new coordinator.
         FastBully.getInstance().setCoordinator(server);
 
         // stops its election procedure
         FastBully.getInstance().setElectionReady(true);
+        FastBully.getInstance().stopCoordinationMessageTimeout();
+        FastBully.getInstance().stopAnswerMessageTimeout();
     }
 
     public void respondToIamUpMessage(@NonNull Server server) throws InterruptedException {

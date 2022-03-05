@@ -41,6 +41,10 @@ public class FastBully {
 
     private AtomicBoolean electionReady = new AtomicBoolean(true);
 
+    private AtomicBoolean isWaitingForCoordinatorMessage = new AtomicBoolean(false);
+
+    private AtomicBoolean coordinatorMessageReceived = new AtomicBoolean(false);
+
     private final ConcurrentNavigableMap<Server, Boolean> answerStatus = new ConcurrentSkipListMap<>();
 
     private FastBully() {
@@ -291,7 +295,7 @@ public class FastBully {
         return isWaitingForAnswerMessage.get();
     }
 
-    public void setAnswerMessageReceived(@NonNull Server server, @NonNull Boolean z) {
+    public synchronized void setAnswerMessageReceived(@NonNull Server server, @NonNull Boolean z) {
         answerMessageReceived.set(z);
         answerStatus.put(server, Boolean.TRUE);
     }
@@ -336,6 +340,7 @@ public class FastBully {
                                    @Override
                                    public void onStart() {
                                        logger.info("Coordinator message timeout started!");
+                                       isWaitingForCoordinatorMessage.set(true);
                                    }
 
                                    @Override
@@ -346,10 +351,33 @@ public class FastBully {
                                    @Override
                                    public void onComplete() {
                                        logger.info("Coordinator message timeout completed!");
-
+                                       if (!coordinatorMessageReceived.get()) {
+                                           logger.info("No coordinator messages received, Repeat");
+                                           // send nomination to the next highest priority numbered process
+                                           Server nextHighestPriorityServer = answerStatus.pollFirstEntry().getKey();
+                                           if (nextHighestPriorityServer != null) {
+                                               FastBully.getInstance().sendNominationMessage(answerStatus.pollFirstEntry().getKey());
+                                           } else {
+                                               // If no process left to choose, restarts the election procedure
+                                               FastBully.getInstance().startElection();
+                                           }
+                                       }
+                                       stopCoordinationMessageTimeout();
                                    }
                                }
                 )
         );
+    }
+
+    public synchronized void setCoordinatorMessageReceived(@NonNull Boolean z) {
+        coordinatorMessageReceived.set(z);
+    }
+
+    public synchronized void stopCoordinationMessageTimeout() {
+        if (isWaitingForCoordinatorMessage.get() && !coordinatorMessageTimeoutDisposable.isDisposed()) {
+            logger.info("Coordinator message timeout stopped!");
+            isWaitingForCoordinatorMessage.set(false);
+            coordinatorMessageTimeoutDisposable.dispose();
+        }
     }
 }
