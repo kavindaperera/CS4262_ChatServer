@@ -131,6 +131,12 @@ public class MessageHandler {
         RoomManager.addToGlobalRoomsList(identity, serverId);
     }
 
+    public void respondToInformRoomIdDeletionMessage(JSONObject receivedMessage) {
+        String roomId = (String) receivedMessage.get("roomid");
+
+        RoomManager.removeFromGlobalRoomsList(roomId);
+    }
+
 
     private void sendApproveClientIdMessage(Server server, String message) throws InterruptedException {
         logger.info("Send approveClientId to: " + server.getServerId());
