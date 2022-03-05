@@ -5,7 +5,6 @@ import com.codewizards.message.ClientMessage;
 import com.codewizards.message.ServerMessage;
 import com.codewizards.room.RoomManager;
 import com.codewizards.server.Server;
-import com.codewizards.server.ServerHandler;
 
 import com.codewizards.server.ServerState;
 import lombok.Getter;
@@ -21,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class ClientHandler extends Thread{
 
@@ -102,6 +102,36 @@ public class ClientHandler extends Thread{
         RoomManager.getLocalRoomsList().get(tempMessage.get("roomid").toString()).getClientHashMap().put(tempMessage.get("identity").toString(), this.clientState);
         ClientManager.addToLocalClientsList(tempMessage.get("identity").toString());
         ClientManager.addToGlobalClientsList(tempMessage.get("identity").toString(), Main.SERVER_ID);
+    }
+
+    public void doUpdatesWhenDeletingRoom(String roomId) throws IOException {
+        List<String> clientsOfDeletingRoom = RoomManager.getLocalRoomsList().get(roomId).getClientsAsList();
+        for (String client: clientsOfDeletingRoom) {
+            JSONObject roomChange = ClientMessage.getRoomChangeBroadcast(client, roomId, RoomManager.MAINHALL_ID);
+            RoomManager.broadcastToChatRoom(roomId, clientState.getClientId(), roomChange.toJSONString());
+            RoomManager.broadcastToChatRoom(RoomManager.MAINHALL_ID, clientState.getClientId(), roomChange.toJSONString());
+            writer.write((roomChange.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+            writer.flush();
+        }
+
+        RoomManager.removeFromGlobalRoomsList(roomId);
+        RoomManager.getLocalRoomsList().remove(roomId).changeRoomOfClients(clientState.getClientId());
+    }
+
+    public void informServersRoomDeletion(String roomId) {
+        for (Server server : ServerState.getInstance().getServerListAsArrayList()) {
+            logger.info("Send deleteroom to: " + server.getServerId());
+            try {
+                Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                dataOutputStream.write((ServerMessage.getInformRoomIdDeletionMessage(ServerState.getInstance().getOwnServer().getServerId(), roomId) + "\n").getBytes(StandardCharsets.UTF_8));
+                dataOutputStream.flush();
+
+            } catch (IOException e) {
+                logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
+            }
+
+        }
     }
 
     @Override
@@ -200,7 +230,6 @@ public class ClientHandler extends Thread{
                             ClientManager.removeFromClientHandlerList(clientState.getClientId());
                             isRunning = false;
                         }
-
                         break;
                     }
                     case "movejoin": {
@@ -223,7 +252,17 @@ public class ClientHandler extends Thread{
                         break;
                     }
                     case "deleteroom": {
-                        this.messageHandler.respondToDeleteRoomRequest();
+                        String roomId = (String) receivedMessage.get("roomid");
+                        JSONObject response = this.messageHandler.respondToDeleteRoomRequest(roomId, clientState);
+
+                        if (response.get("approved").toString().equalsIgnoreCase("true")) {
+                            doUpdatesWhenDeletingRoom(roomId);
+                            informServersRoomDeletion(roomId);
+                            clientState.setRoomId(RoomManager.MAINHALL_ID);
+                            RoomManager.getLocalRoomsList().get(RoomManager.MAINHALL_ID).getClientHashMap().put(clientState.getClientId(), clientState);
+                        }
+                        writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+                        writer.flush();
                         break;
                     }
                     case "quit": {
