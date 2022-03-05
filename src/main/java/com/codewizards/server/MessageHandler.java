@@ -58,7 +58,6 @@ public class MessageHandler {
 
     public void respondToIamUpMessage(@NonNull Server server) throws InterruptedException {
         logger.info("Received IamUp from " + server.getServerId());
-//        Thread.sleep(3000L); // delay reply
         FastBully.getInstance().sendViewMessage(server);
         ServerState.getInstance().addServerToServerView(server);
     }
@@ -69,16 +68,6 @@ public class MessageHandler {
         FastBully.getInstance().setViewMessagesReceived(true);
         view.add(server.getServerId());
         ServerState.getInstance().compareAndSetView(view);
-        Server highestPriorityServer = ServerState.getInstance().getHighestPriorityServer();
-        if (highestPriorityServer.getServerId().equalsIgnoreCase(ServerState.getInstance().getOwnServer().getServerId())){
-            logger.info("I am the highest priority numbered process");
-            // send coordinator message to lower priority servers
-            FastBully.getInstance().notifyNewCoordinator(ServerState.getInstance().getServersWithLowerPriority());
-        } else{
-            FastBully.getInstance().setCoordinator(highestPriorityServer);
-            // TODO - stop election
-        }
-
     }
 
     public void respondToRequestClientIdApprovalMessage(JSONObject receivedMessage) throws InterruptedException {
