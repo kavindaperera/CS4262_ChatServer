@@ -118,6 +118,41 @@ public class ClientHandler extends Thread{
         RoomManager.getLocalRoomsList().remove(roomId).changeRoomOfClients(clientState.getClientId());
     }
 
+    public void doUpdatesWhenQuiting() throws IOException {
+        if (!clientState.getOwnRoomId().equalsIgnoreCase("")) {
+            List<String> clientsOfDeletingRoom = RoomManager.getLocalRoomsList().get(clientState.getOwnRoomId()).getClientsAsList();
+            JSONObject roomChange;
+            for (String client: clientsOfDeletingRoom) {
+                if (client.equalsIgnoreCase(clientState.getClientId())) {
+                    roomChange = ClientMessage.getRoomChangeBroadcast(client, clientState.getOwnRoomId(), "");
+                } else {
+                    roomChange = ClientMessage.getRoomChangeBroadcast(client, clientState.getOwnRoomId(), RoomManager.MAINHALL_ID);
+                }
+                RoomManager.broadcastToChatRoom(clientState.getOwnRoomId(), clientState.getClientId(), roomChange.toJSONString());
+                RoomManager.broadcastToChatRoom(RoomManager.MAINHALL_ID, clientState.getClientId(), roomChange.toJSONString());
+                if (!client.equalsIgnoreCase(clientState.getClientId())) {
+                    writer.write((roomChange.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+                    writer.flush();
+                }
+            }
+            RoomManager.removeFromGlobalRoomsList(clientState.getOwnRoomId());
+            RoomManager.getLocalRoomsList().remove(clientState.getOwnRoomId()).changeRoomOfClients(clientState.getClientId());
+
+            informServersRoomDeletion(clientState.getOwnRoomId());
+        }
+
+        JSONObject myRoomChange = ClientMessage.getRoomChangeBroadcast(clientState.getClientId(), clientState.getRoomId(), "");
+        if (clientState.getOwnRoomId().equalsIgnoreCase("")) {
+            RoomManager.broadcastToChatRoom(clientState.getRoomId(), clientState.getClientId(), myRoomChange.toJSONString());
+            RoomManager.getLocalRoomsList().get(clientState.getRoomId()).getClientHashMap().remove(clientState.getClientId());
+        }
+        writer.write((myRoomChange.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+        writer.flush();
+
+        ClientManager.removeFromGlobalClientList(clientState.getClientId());
+        ClientManager.removeFromLocalClientList(clientState.getClientId());
+    }
+
     public void informServersRoomDeletion(String roomId) {
         for (Server server : ServerState.getInstance().getServerListAsArrayList()) {
             logger.info("Send deleteroom to: " + server.getServerId());
@@ -266,7 +301,9 @@ public class ClientHandler extends Thread{
                         break;
                     }
                     case "quit": {
-                        this.messageHandler.respondToQuitRequest();
+                        doUpdatesWhenQuiting();
+                        ClientManager.removeFromClientHandlerList(clientState.getClientId());
+                        isRunning = false;
                         break;
                     }
                     case "message": {
