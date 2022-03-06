@@ -69,4 +69,10 @@ public class ClientManager {
         }
     }
 
+    public static void removeFromGlobalClientList(String clientID) {
+        synchronized (globalClientsList) {
+            globalClientsList.remove(clientID);
+        }
+    }
+
 }
