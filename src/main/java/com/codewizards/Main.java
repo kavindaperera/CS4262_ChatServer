@@ -7,7 +7,6 @@ import com.codewizards.server.Server;
 import com.codewizards.server.ServerHandler;
 import com.codewizards.server.ServerState;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
@@ -26,8 +25,6 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        // initialize log4j
-        loadLog4J();
         logger = Logger.getLogger(Main.class.getName());
 
         //load command line args
@@ -104,11 +101,6 @@ public class Main {
         RoomManager.initializeGlobalRoomsList();
         String mainHallId = "MainHall-" + SERVER_ID;
         RoomManager.createChatRoom(mainHallId, "");
-    }
-
-    public static void loadLog4J() {
-        String log4j_path = System.getProperty("user.dir") + "/log4j.properties";
-        PropertyConfigurator.configure(log4j_path);
     }
 
 }
