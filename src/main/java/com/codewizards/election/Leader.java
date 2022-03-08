@@ -8,11 +8,12 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
 import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.Disposables;
 import io.reactivex.schedulers.Schedulers;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -23,6 +24,8 @@ public class Leader {
     private static Leader INSTANCE;
 
     private static Observable<Server> serverObservable;
+
+    private static CompositeDisposable heartbeatDisposables = new CompositeDisposable();
 
     private static AtomicBoolean heartbeatRunning = new AtomicBoolean(false);
 
@@ -40,6 +43,7 @@ public class Leader {
     public static synchronized void deleteInstance() {
         heartbeatRunning.set(false);
         serverObservable = null;
+        heartbeatDisposables.clear();
         INSTANCE = null;
         logger.info("Leader Heartbeat Stopped");
     }
@@ -48,8 +52,7 @@ public class Leader {
 
         if (serverObservable != null) return;
 
-        serverObservable = Observable
-                .create((ObservableOnSubscribe<Server>) emitter -> {
+        serverObservable = Observable.create((ObservableOnSubscribe<Server>) emitter -> {
 
                     for (Server server : ServerState.getInstance().getServerViewAsServerArrayList()) {
                         if (!emitter.isDisposed()) {
@@ -61,7 +64,8 @@ public class Leader {
                         emitter.onComplete();
                     }
 
-                }).subscribeOn(Schedulers.io())
+                })
+                .subscribeOn(Schedulers.io())
                 .repeatWhen(throwableObservable -> throwableObservable.delay(Constants.HEARTBEAT_SND_INTERVAL, TimeUnit.MILLISECONDS))
                 .filter(server -> heartbeatRunning.get());
 
@@ -70,6 +74,7 @@ public class Leader {
             public void onSubscribe(@NonNull Disposable disposable) {
                 logger.info("onSubscribe: Starting Leader Heartbeat");
                 heartbeatRunning.set(true);
+                heartbeatDisposables.add(disposable);
             }
 
             @Override
@@ -92,7 +97,7 @@ public class Leader {
     }
 
     public void sendHeartbeatMessage(Server server) {
-        MessageSender.sendHeartbeatMessage(server, ()->handleHeartbeatSendFailure(server));
+        MessageSender.sendHeartbeatMessage(server, () -> handleHeartbeatSendFailure(server));
     }
 
     private void handleHeartbeatSendFailure(Server server) {
