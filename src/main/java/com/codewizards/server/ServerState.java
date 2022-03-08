@@ -1,6 +1,5 @@
 package com.codewizards.server;
 
-import com.codewizards.election.Leader;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -51,12 +50,12 @@ public class ServerState {
         }
     }
 
-    public synchronized void addServerToServerView(@NonNull Server server) {
+    public void addServerToServerView(@NonNull Server server) {
         serverView.put(server.getServerId(), server);
         logger.info("Server " + server.getServerId() + " added to view");
     }
 
-    public synchronized void removeServerFromServerView(@NonNull Server server) {
+    public void removeServerFromServerView(@NonNull Server server) {
         serverView.remove(server.getServerId());
         logger.info("Server " + server.getServerId() + " removed from view");
     }
@@ -69,7 +68,7 @@ public class ServerState {
         return new ArrayList<>(serverList.keySet());
     }
 
-    public Server getServerByServerId(String serverId) {
+    public Server getServerByServerId(@NonNull String serverId) {
         if (ownServer.getServerId().equalsIgnoreCase(serverId)) {
             return ownServer;
         }
@@ -86,6 +85,7 @@ public class ServerState {
 
     public void compareAndSetView(@NonNull List<String> view) {
         for (String server : view) {
+            if (server.equalsIgnoreCase(ownServer.getServerId())) continue;
             addServerToServerView(getServerByServerId(server));
         }
         logger.info("New view: " + getServerViewAsArrayList());
