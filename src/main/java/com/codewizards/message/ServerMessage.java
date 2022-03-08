@@ -1,6 +1,5 @@
 package com.codewizards.message;
 
-import com.codewizards.server.Server;
 import lombok.NonNull;
 import org.json.simple.JSONObject;
 
@@ -109,6 +108,7 @@ public class ServerMessage {
         return requestClientIdApproval;
     }
 
+    @SuppressWarnings("unchecked")
     public static JSONObject getApproveRoomIDMessage(@NonNull String serverId, @NonNull String approved, @NonNull String requestedId, @NonNull String clientId) {
         JSONObject approveRoomID = new JSONObject();
         approveRoomID.put("type", "approveRoomId");
@@ -119,6 +119,7 @@ public class ServerMessage {
         return approveRoomID;
     }
 
+    @SuppressWarnings("unchecked")
     public static JSONObject getRequestRoomIdApprovalMessage(@NonNull String serverId, @NonNull String requestedId, @NonNull String clientId) {
         JSONObject requestRoomIdApproval = new JSONObject();
         requestRoomIdApproval.put("type", "requestRoomIdApproval");
@@ -128,6 +129,7 @@ public class ServerMessage {
         return requestRoomIdApproval;
     }
 
+    @SuppressWarnings("unchecked")
     public static JSONObject getInformClientIdCreationMessage(@NonNull String serverId, @NonNull String requestedId) {
         JSONObject informClientIdCreation = new JSONObject();
         informClientIdCreation.put("type", "informClientIdCreation");
@@ -136,6 +138,7 @@ public class ServerMessage {
         return informClientIdCreation;
     }
 
+    @SuppressWarnings("unchecked")
     public static JSONObject getInformClientIdDeletionMessage(@NonNull String serverId, @NonNull String clientId) {
         JSONObject informRoomIdDeletion = new JSONObject();
         informRoomIdDeletion.put("type", "deleteclient");
@@ -144,6 +147,7 @@ public class ServerMessage {
         return informRoomIdDeletion;
     }
 
+    @SuppressWarnings("unchecked")
     public static JSONObject getInformRoomIdCreationMessage(@NonNull String serverId, @NonNull String requestedId) {
         JSONObject informRoomIdCreation = new JSONObject();
         informRoomIdCreation.put("type", "informRoomIdCreation");
@@ -152,6 +156,7 @@ public class ServerMessage {
         return informRoomIdCreation;
     }
 
+    @SuppressWarnings("unchecked")
     public static JSONObject getInformRoomIdDeletionMessage(@NonNull String serverId, @NonNull String roomId) {
         JSONObject informRoomIdDeletion = new JSONObject();
         informRoomIdDeletion.put("type", "deleteroom");
@@ -170,6 +175,18 @@ public class ServerMessage {
         heartbeat.put("type", "heartbeat");
         heartbeat.put("serverId", serverId);
         return heartbeat;
+    }
+
+    /**
+     * @param serverId failed server identifier
+     * @return inform server failure message
+     */
+    @SuppressWarnings("unchecked")
+    public static JSONObject getInformServerFailureMessage(@NonNull String serverId) {
+        JSONObject informServerFailure = new JSONObject();
+        informServerFailure.put("type", "informServerFailure");
+        informServerFailure.put("serverId", serverId);
+        return informServerFailure;
     }
 
 }
