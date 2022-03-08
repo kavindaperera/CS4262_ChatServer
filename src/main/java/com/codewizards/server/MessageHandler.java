@@ -68,9 +68,11 @@ public class MessageHandler {
     public void respondToViewMessage(@NonNull Server server, @NonNull JSONObject message)  {
         List<String> view = (List<String>) message.get("processes");
         logger.info("Received view from " + server.getServerId() + " | view: " + view);
-        FastBully.getInstance().setViewMessagesReceived(true);
-        view.add(server.getServerId());
-        ServerState.getInstance().compareAndSetView(view);
+        if (FastBully.getInstance().isWaitingForViewMessage()){
+            FastBully.getInstance().setViewMessagesReceived(true);
+            view.add(server.getServerId());
+            ServerState.getInstance().compareAndSetView(view);
+        }
     }
 
     public void respondToRequestClientIdApprovalMessage(JSONObject receivedMessage) throws InterruptedException {
