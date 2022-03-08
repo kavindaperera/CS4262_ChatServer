@@ -59,10 +59,11 @@ public class FastBully {
 
     public String notifyIamUp(List<Server> serverList){
         logger.info("IamUp!!!");
-        startViewMessageTimeout(); // TODO - start timeout after sending
+        isWaitingForViewMessage.set(true);
         for (Server server : serverList) {
             sendIamUpMessage(server);
         }
+        startViewMessageTimeout();
         return null;
     }
 
@@ -100,13 +101,16 @@ public class FastBully {
         }
     }
 
+    public boolean isWaitingForViewMessage(){
+        return isWaitingForViewMessage.get();
+    }
+
     private void startViewMessageTimeout() {
         viewMessageTimeoutDisposable = (Completable.timer(Constants.VIEW_MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS)
                 .subscribeWith(new DisposableCompletableObserver() {
                                    @Override
                                    public void onStart() {
                                        logger.info("View message timeout started!");
-                                       isWaitingForViewMessage.set(true);
                                    }
 
                                    @Override
