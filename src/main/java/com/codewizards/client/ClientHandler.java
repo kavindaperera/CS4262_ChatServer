@@ -19,6 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -118,7 +119,7 @@ public class ClientHandler extends Thread{
         RoomManager.getLocalRoomsList().remove(roomId).changeRoomOfClients(clientState.getClientId());
     }
 
-    public void doUpdatesWhenQuiting() throws IOException {
+    public void doUpdatesWhenQuiting() {
         if (!clientState.getOwnRoomId().equalsIgnoreCase("")) {
             List<String> clientsOfDeletingRoom = RoomManager.getLocalRoomsList().get(clientState.getOwnRoomId()).getClientsAsList();
             JSONObject roomChange;
@@ -131,8 +132,12 @@ public class ClientHandler extends Thread{
                 RoomManager.broadcastToChatRoom(clientState.getOwnRoomId(), clientState.getClientId(), roomChange.toJSONString());
                 RoomManager.broadcastToChatRoom(RoomManager.MAINHALL_ID, clientState.getClientId(), roomChange.toJSONString());
                 if (!client.equalsIgnoreCase(clientState.getClientId())) {
-                    writer.write((roomChange.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
-                    writer.flush();
+                    try {
+                        writer.write((roomChange.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+                        writer.flush();
+                    } catch (IOException e) {
+                        logger.error("Communication Error: " + e.getMessage());
+                    }
                 }
             }
             RoomManager.removeFromGlobalRoomsList(clientState.getOwnRoomId());
@@ -146,11 +151,17 @@ public class ClientHandler extends Thread{
             RoomManager.broadcastToChatRoom(clientState.getRoomId(), clientState.getClientId(), myRoomChange.toJSONString());
             RoomManager.getLocalRoomsList().get(clientState.getRoomId()).getClientHashMap().remove(clientState.getClientId());
         }
-        writer.write((myRoomChange.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
-        writer.flush();
+        try {
+            writer.write((myRoomChange.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
+            writer.flush();
+        } catch (IOException e) {
+            logger.error("Communication Error: " + e.getMessage());
+        }
 
         ClientManager.removeFromGlobalClientList(clientState.getClientId());
         ClientManager.removeFromLocalClientList(clientState.getClientId());
+
+        informServersClientDeletion(clientState.getClientId());
     }
 
     public void informServersRoomDeletion(String roomId) {
@@ -160,6 +171,22 @@ public class ClientHandler extends Thread{
                 Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
                 DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
                 dataOutputStream.write((ServerMessage.getInformRoomIdDeletionMessage(ServerState.getInstance().getOwnServer().getServerId(), roomId) + "\n").getBytes(StandardCharsets.UTF_8));
+                dataOutputStream.flush();
+
+            } catch (IOException e) {
+                logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
+            }
+
+        }
+    }
+
+    public void informServersClientDeletion(String clientId) {
+        for (Server server : ServerState.getInstance().getServerListAsArrayList()) {
+            logger.info("Send deleteclient to: " + server.getServerId());
+            try {
+                Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                dataOutputStream.write((ServerMessage.getInformClientIdDeletionMessage(ServerState.getInstance().getOwnServer().getServerId(), clientId) + "\n").getBytes(StandardCharsets.UTF_8));
                 dataOutputStream.flush();
 
             } catch (IOException e) {
@@ -315,6 +342,10 @@ public class ClientHandler extends Thread{
             }
         } catch (ParseException e) {
             logger.error("Message Error: " + e.getMessage());
+        } catch (SocketException e) {
+            logger.error("Connection Error: " + e.getMessage());
+            doUpdatesWhenQuiting();
+            ClientManager.removeFromClientHandlerList(clientState.getClientId());
         } catch (IOException e) {
             logger.error("Communication Error: " + e.getMessage());
         }

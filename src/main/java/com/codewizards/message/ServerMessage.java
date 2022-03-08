@@ -136,6 +136,14 @@ public class ServerMessage {
         return informClientIdCreation;
     }
 
+    public static JSONObject getInformClientIdDeletionMessage(@NonNull String serverId, @NonNull String clientId) {
+        JSONObject informRoomIdDeletion = new JSONObject();
+        informRoomIdDeletion.put("type", "deleteclient");
+        informRoomIdDeletion.put("serverId", serverId);
+        informRoomIdDeletion.put("clientId", clientId);
+        return informRoomIdDeletion;
+    }
+
     public static JSONObject getInformRoomIdCreationMessage(@NonNull String serverId, @NonNull String requestedId) {
         JSONObject informRoomIdCreation = new JSONObject();
         informRoomIdCreation.put("type", "informRoomIdCreation");
