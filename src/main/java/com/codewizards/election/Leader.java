@@ -75,11 +75,7 @@ public class Leader {
             @Override
             public void onNext(@NonNull Server server) {
                 logger.info("onNext: Send Leader Heartbeat to " + server.getServerId());
-                try {
-                    Leader.getInstance().sendHeartbeatMessage(server);
-                } catch (IOException ioException) {
-                    this.onError(ioException);
-                }
+                Leader.getInstance().sendHeartbeatMessage(server);
             }
 
             @Override
@@ -95,8 +91,13 @@ public class Leader {
 
     }
 
-    public void sendHeartbeatMessage(Server server) throws IOException {
-        MessageSender.sendHeartbeatMessage(server);
+    public void sendHeartbeatMessage(Server server) {
+        MessageSender.sendHeartbeatMessage(server, ()->handleHeartBeatSendFailure(server));
+    }
+
+    private void handleHeartBeatSendFailure(Server server) {
+        logger.info("Server " + server.getServerId() + " is down!");
+        ServerState.getInstance().removeServerFromServerView(server);
     }
 
 }
