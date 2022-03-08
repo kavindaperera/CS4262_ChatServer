@@ -75,7 +75,7 @@ public class MessageHandler {
 
     public void respondToRequestClientIdApprovalMessage(JSONObject receivedMessage) throws InterruptedException {
         String requestedID = (String) receivedMessage.get("identity");
-        JSONObject response = null;
+        JSONObject response;
         if (ClientManager.checkClientIdentityAvailability(requestedID)){
             response = ServerMessage.getApproveClientIDMessage(Main.SERVER_ID,"true", requestedID);
             ClientManager.addToGlobalClientsList(requestedID, receivedMessage.get("serverId").toString());
@@ -101,11 +101,17 @@ public class MessageHandler {
         ClientManager.addToGlobalClientsList(identity, serverId);
     }
 
+    public void respondToInformClientIdDeletionMessage(JSONObject receivedMessage) {
+        String clientId = (String) receivedMessage.get("clientId");
+
+        ClientManager.removeFromGlobalClientList(clientId);
+    }
+
     public void respondToRequestRoomIdApprovalMessage(JSONObject receivedMessage) throws InterruptedException {
         String requestedID = (String) receivedMessage.get("identity");
         String clientID = (String) receivedMessage.get("clientId");
 
-        JSONObject response = null;
+        JSONObject response;
         if (RoomManager.checkRoomIdAvailability(requestedID)){
             response = ServerMessage.getApproveRoomIDMessage(Main.SERVER_ID,"true", requestedID, clientID);
             RoomManager.addToGlobalRoomsList(requestedID, receivedMessage.get("serverId").toString());
@@ -140,7 +146,6 @@ public class MessageHandler {
 
     private void sendApproveClientIdMessage(Server server, String message) throws InterruptedException {
         logger.info("Send approveClientId to: " + server.getServerId());
-        //Thread.sleep(1000L); // delay reply
         try {
             Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
@@ -154,7 +159,6 @@ public class MessageHandler {
 
     private void sendApproveRoomIdMessage(Server server, String message) throws InterruptedException {
         logger.info("Send approveRoomId to: " + server.getServerId());
-        //Thread.sleep(1000L); // delay reply
         try {
             Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
