@@ -28,15 +28,11 @@ public class ClientManager {
     }
 
     public static boolean checkClientIdentityAvailability(String requestedClientID) {
-        synchronized (globalClientsList) {
-            return !globalClientsList.containsKey(requestedClientID);
-        }
+        return !globalClientsList.containsKey(requestedClientID);
     }
 
     public static void addToGlobalClientsList(String clientID, String serverID) {
-        synchronized (globalClientsList) {
-            globalClientsList.put(clientID, serverID);
-        }
+        globalClientsList.put(clientID, serverID);
     }
 
     public static void addToLocalClientsList(String clientID) {
@@ -46,21 +42,15 @@ public class ClientManager {
     }
 
     public static void addToClientHandlersList(String clientID, ClientHandler clientHandler) {
-        synchronized (clientHandlersList) {
-            clientHandlersList.put(clientID, clientHandler);
-        }
+        clientHandlersList.put(clientID, clientHandler);
     }
 
     public static ClientHandler getClientHandler(String clientID) {
-        synchronized (clientHandlersList) {
-            return clientHandlersList.get(clientID);
-        }
+        return clientHandlersList.get(clientID);
     }
 
     public static void removeFromClientHandlerList(String clientID) {
-        synchronized (clientHandlersList) {
-            clientHandlersList.remove(clientID);
-        }
+        clientHandlersList.remove(clientID);
     }
 
     public static void removeFromLocalClientList(String clientID) {
@@ -70,9 +60,7 @@ public class ClientManager {
     }
 
     public static void removeFromGlobalClientList(String clientID) {
-        synchronized (globalClientsList) {
-            globalClientsList.remove(clientID);
-        }
+        globalClientsList.remove(clientID);
     }
 
 }
