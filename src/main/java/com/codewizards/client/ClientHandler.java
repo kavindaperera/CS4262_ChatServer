@@ -151,6 +151,8 @@ public class ClientHandler extends Thread{
 
         ClientManager.removeFromGlobalClientList(clientState.getClientId());
         ClientManager.removeFromLocalClientList(clientState.getClientId());
+
+        informServersClientDeletion(clientState.getClientId());
     }
 
     public void informServersRoomDeletion(String roomId) {
@@ -160,6 +162,22 @@ public class ClientHandler extends Thread{
                 Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
                 DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
                 dataOutputStream.write((ServerMessage.getInformRoomIdDeletionMessage(ServerState.getInstance().getOwnServer().getServerId(), roomId) + "\n").getBytes(StandardCharsets.UTF_8));
+                dataOutputStream.flush();
+
+            } catch (IOException e) {
+                logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
+            }
+
+        }
+    }
+
+    public void informServersClientDeletion(String clientId) {
+        for (Server server : ServerState.getInstance().getServerListAsArrayList()) {
+            logger.info("Send deleteclient to: " + server.getServerId());
+            try {
+                Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                dataOutputStream.write((ServerMessage.getInformClientIdDeletionMessage(ServerState.getInstance().getOwnServer().getServerId(), clientId) + "\n").getBytes(StandardCharsets.UTF_8));
                 dataOutputStream.flush();
 
             } catch (IOException e) {
