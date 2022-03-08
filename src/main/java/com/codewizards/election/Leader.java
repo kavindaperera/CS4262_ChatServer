@@ -92,12 +92,13 @@ public class Leader {
     }
 
     public void sendHeartbeatMessage(Server server) {
-        MessageSender.sendHeartbeatMessage(server, ()->handleHeartBeatSendFailure(server));
+        MessageSender.sendHeartbeatMessage(server, ()->handleHeartbeatSendFailure(server));
     }
 
-    private void handleHeartBeatSendFailure(Server server) {
+    private void handleHeartbeatSendFailure(Server server) {
         logger.info("Server " + server.getServerId() + " is down!");
         ServerState.getInstance().removeServerFromServerView(server);
+        // TODO - broadcast inform server failure message
     }
 
 }
