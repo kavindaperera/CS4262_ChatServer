@@ -33,12 +33,9 @@ public class RoomManager {
             MAINHALL_ID = roomId;
         }
         Room chatRoom = new Room(roomId, clientId);
-        synchronized (localRoomsList) {
-            localRoomsList.put(roomId, chatRoom);
-        }
-        synchronized (globalRoomsList) {
-            globalRoomsList.put(roomId, ServerState.getInstance().getOwnServer().getServerId());
-        }
+
+        localRoomsList.put(roomId, chatRoom);
+        globalRoomsList.put(roomId, ServerState.getInstance().getOwnServer().getServerId());
     }
 
     /**
@@ -60,33 +57,23 @@ public class RoomManager {
     }
 
     public static boolean checkRoomIdAvailability(String requestedRoomID) {
-        synchronized (globalRoomsList) {
-            return !globalRoomsList.containsKey(requestedRoomID);
-        }
+        return !globalRoomsList.containsKey(requestedRoomID);
     }
 
     public static boolean checkLocalRoomIdAvailability(String requestedRoomID) {
-        synchronized (localRoomsList) {
-            return !localRoomsList.containsKey(requestedRoomID);
-        }
+        return !localRoomsList.containsKey(requestedRoomID);
     }
 
    public static String getServerOfRoom(String roomId) {
-        synchronized (globalRoomsList) {
-            return globalRoomsList.get(roomId);
-        }
+        return globalRoomsList.get(roomId);
     }
 
     public static void addToGlobalRoomsList(String roomID, String serverID) {
-        synchronized (globalRoomsList) {
-            globalRoomsList.put(roomID, serverID);
-        }
+        globalRoomsList.put(roomID, serverID);
     }
 
     public static void removeFromGlobalRoomsList(String roomId) {
-        synchronized (globalRoomsList) {
-            globalRoomsList.remove(roomId);
-        }
+        globalRoomsList.remove(roomId);
     }
 
     public static void initializeGlobalRoomsList() {
