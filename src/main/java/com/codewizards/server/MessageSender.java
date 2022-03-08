@@ -31,11 +31,15 @@ public class MessageSender {
             dataOutputStream.flush();
     }
 
-    public static void sendHeartbeatMessage(@NonNull Server server) throws IOException {
+    public static void sendHeartbeatMessage(@NonNull Server server, @NonNull Runnable failure){
+        try {
             Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
             dataOutputStream.write((ServerMessage.getHeartbeatMessage(ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes(StandardCharsets.UTF_8));
             dataOutputStream.flush();
+        } catch (IOException e) {
+            failure.run();
+        }
     }
 
     public static void sendElectionMessage(@NonNull Server server) throws IOException {
