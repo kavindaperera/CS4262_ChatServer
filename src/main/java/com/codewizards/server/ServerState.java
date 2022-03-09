@@ -125,4 +125,8 @@ public class ServerState {
         return lowerPriorityServerList;
     }
 
+    public int getOwnServerPriority(){
+        return Integer.parseInt(ownServer.getServerId().substring(1));
+    }
+
 }

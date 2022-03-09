@@ -402,7 +402,7 @@ public class FastBully {
     }
 
     private void startNominationOrCoordinationMessageTimeout() {
-        nominationOrCoordinationMessageTimeoutDisposable = (Completable.timer(Constants.COORDINATOR_MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS)
+        nominationOrCoordinationMessageTimeoutDisposable = (Completable.timer(Constants.getT4(ServerState.getInstance().getOwnServerPriority()), TimeUnit.MILLISECONDS)
                 .subscribeWith(new DisposableCompletableObserver() {
                                    @Override
                                    public void onStart() {
@@ -417,8 +417,8 @@ public class FastBully {
                                    @Override
                                    public void onComplete() {
                                        logger.info("Nomination or coordination message timeout completed!");
-                                       logger.info("No nomination or coordination messages received, Repeat");
                                        if (!nominationOrCoordinatorMessageReceived.get()) {
+                                           logger.info("No nomination or coordination messages received, Restart");
                                            if (electionReady.get()){ // no election is running
                                                // restart election procedure
                                                startElection();

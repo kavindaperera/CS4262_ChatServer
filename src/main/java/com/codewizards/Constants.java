@@ -1,5 +1,7 @@
 package com.codewizards;
 
+import lombok.NonNull;
+
 public class Constants {
 
     // timeouts in milliseconds
@@ -9,5 +11,9 @@ public class Constants {
     public static final long HEARTBEAT_SND_INTERVAL = 10000L;
     public static final long REQUEST_APPROVAL_TIMEOUT = 8000L;
     public static final long HEARTBEAT_WAIT_INTERVAL = HEARTBEAT_SND_INTERVAL * 2;
+
+    public static long getT4(@NonNull Integer priorityNumber) {
+        return 8000L / (2L * priorityNumber);
+    }
 
 }
