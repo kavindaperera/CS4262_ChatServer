@@ -14,6 +14,7 @@ import io.reactivex.disposables.Disposables;
 import io.reactivex.schedulers.Schedulers;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -103,7 +104,14 @@ public class Leader {
     private void handleHeartbeatSendFailure(Server server) {
         logger.info("Server " + server.getServerId() + " is down!");
         ServerState.getInstance().removeServerFromServerView(server);
-        // TODO - broadcast inform server failure message
+        // broadcast inform server failure message
+        for (Server server1 : ServerState.getInstance().getServerViewAsServerArrayList()){
+            try {
+                MessageSender.sendInformServerFailureMessage(server1, server.getServerId());
+            } catch (IOException e) {
+                logger.error("handleHeartbeatSendFailure(): " + e.getLocalizedMessage());
+            }
+        }
     }
 
 }

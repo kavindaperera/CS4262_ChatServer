@@ -97,10 +97,15 @@ public class ServerHandler extends Thread{
                     break;
                 }
                 case "heartbeat":{
-                    logger.debug("Received heartbeat message from: " + message);
+                    logger.debug("Received heartbeat message from: " + server.getServerId());
                     if (server.equals(ServerState.getInstance().getCoordinator()) && !server.equals(ServerState.getInstance().getOwnServer())){
                         FastBully.getInstance().resetHeartbeatWaitTimeout();
                     }
+                    break;
+                }
+                case "informServerFailure":{
+                    logger.debug("Received informServerFailure message: " + server.getServerId());
+                    // TODO -  handle server failure
                     break;
                 }
             }

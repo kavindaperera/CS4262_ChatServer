@@ -62,4 +62,11 @@ public class MessageSender {
         dataOutputStream.write((ServerMessage.getNominationMessage(ServerState.getInstance().getOwnServer().getServerId()) + "\n").getBytes(StandardCharsets.UTF_8));
         dataOutputStream.flush();
     }
+
+    public static void sendInformServerFailureMessage(@NonNull Server server, @NonNull String failedServerId) throws IOException {
+        Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        dataOutputStream.write((ServerMessage.getInformServerFailureMessage(failedServerId) + "\n").getBytes(StandardCharsets.UTF_8));
+        dataOutputStream.flush();
+    }
 }
