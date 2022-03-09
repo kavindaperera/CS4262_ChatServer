@@ -23,6 +23,8 @@ public class FastBully {
 
     private static FastBully INSTANCE;
 
+    private final ConcurrentNavigableMap<Server, Boolean> answerStatus = new ConcurrentSkipListMap<>();
+
     private Disposable viewMessageTimeoutDisposable;
 
     private Disposable heartbeatWaitTimeoutDisposable;
@@ -31,21 +33,21 @@ public class FastBully {
 
     private Disposable coordinatorMessageTimeoutDisposable;
 
-    private AtomicBoolean isWaitingForViewMessage = new AtomicBoolean(false);
+    private Disposable nominationOrCoordinationMessageTimeoutDisposable;
 
+    private AtomicBoolean isWaitingForViewMessage = new AtomicBoolean(false);
     private AtomicBoolean viewMessagesReceived = new AtomicBoolean(false);
 
     private AtomicBoolean isWaitingForAnswerMessage = new AtomicBoolean(false);
-
     private AtomicBoolean answerMessageReceived = new AtomicBoolean(false);
 
     private AtomicBoolean electionReady = new AtomicBoolean(true);
 
     private AtomicBoolean isWaitingForCoordinatorMessage = new AtomicBoolean(false);
-
     private AtomicBoolean coordinatorMessageReceived = new AtomicBoolean(false);
 
-    private final ConcurrentNavigableMap<Server, Boolean> answerStatus = new ConcurrentSkipListMap<>();
+    private AtomicBoolean isWaitingForNominationOrCoordinatorMessage = new AtomicBoolean(false);
+    private AtomicBoolean nominationOrCoordinatorMessageReceived = new AtomicBoolean(false);
 
     private FastBully() {
     }
@@ -57,7 +59,7 @@ public class FastBully {
         return INSTANCE;
     }
 
-    public String notifyIamUp(List<Server> serverList){
+    public String notifyIamUp(List<Server> serverList) {
         logger.info("IamUp!!!");
         isWaitingForViewMessage.set(true);
         for (Server server : serverList) {
@@ -76,7 +78,7 @@ public class FastBully {
         }
     }
 
-    public void sendViewMessage(Server server){
+    public void sendViewMessage(Server server) {
         logger.info("Send view message to: " + server.getServerId());
         try {
             MessageSender.sendViewMessage(server);
@@ -85,14 +87,14 @@ public class FastBully {
         }
     }
 
-    public void notifyNewCoordinator(List<Server> lowerPriorityServers){
+    public void notifyNewCoordinator(List<Server> lowerPriorityServers) {
         for (Server server : lowerPriorityServers) {
             sendCoordinatorMessage(server);
         }
         setCoordinator(ServerState.getInstance().getOwnServer());
     }
 
-    public void sendCoordinatorMessage(Server server){
+    public void sendCoordinatorMessage(Server server) {
         logger.info("Send coordinator message to: " + server.getServerId());
         try {
             MessageSender.sendCoordinatorMessage(server);
@@ -101,7 +103,7 @@ public class FastBully {
         }
     }
 
-    public boolean isWaitingForViewMessage(){
+    public boolean isWaitingForViewMessage() {
         return isWaitingForViewMessage.get();
     }
 
@@ -128,12 +130,12 @@ public class FastBully {
 
                                        } else {
                                            Server highestPriorityServer = ServerState.getInstance().getHighestPriorityServer();
-                                           if (highestPriorityServer.getServerId().equalsIgnoreCase(ServerState.getInstance().getOwnServer().getServerId())){
+                                           if (highestPriorityServer.getServerId().equalsIgnoreCase(ServerState.getInstance().getOwnServer().getServerId())) {
                                                logger.info("I am the highest priority numbered process");
                                                // send coordinator message to lower priority servers
                                                FastBully.getInstance().notifyNewCoordinator(ServerState.getInstance().getServersWithLowerPriority());
                                                // stops the procedure
-                                           } else{
+                                           } else {
                                                // admit the highest priority numbered process as the coordinator
                                                FastBully.getInstance().setCoordinator(highestPriorityServer);
                                                // stop election procedure
@@ -242,7 +244,7 @@ public class FastBully {
 
         startAnswerMessageTimeout(); // TODO - start timeout after sending
 
-        for (Server server : higherPriorityServers){
+        for (Server server : higherPriorityServers) {
             sendElectionMessage(server);
         }
 
@@ -286,6 +288,8 @@ public class FastBully {
                                            FastBully.getInstance().sendNominationMessage(answerStatus.pollFirstEntry().getKey());
 
                                            // waits for a coordinator message for the interval T3.
+                                           isWaitingForCoordinatorMessage.set(true);
+                                           nominationOrCoordinatorMessageReceived.set(false);
                                            FastBully.getInstance().starCoordinatorMessageTimeout();
                                        }
                                        stopAnswerMessageTimeout();
@@ -295,7 +299,7 @@ public class FastBully {
         );
     }
 
-    public boolean isWaitingForAnswerMessage(){
+    public boolean isWaitingForAnswerMessage() {
         return isWaitingForAnswerMessage.get();
     }
 
@@ -330,7 +334,7 @@ public class FastBully {
         }
     }
 
-    public synchronized void setElectionReady(@NonNull Boolean z){
+    public synchronized void setElectionReady(@NonNull Boolean z) {
         electionReady.set(z);
 
         if (z) {
@@ -344,7 +348,7 @@ public class FastBully {
                                    @Override
                                    public void onStart() {
                                        logger.info("Coordinator message timeout started!");
-                                       isWaitingForCoordinatorMessage.set(true);
+
                                    }
 
                                    @Override
@@ -373,7 +377,11 @@ public class FastBully {
         );
     }
 
-    public synchronized void setCoordinatorMessageReceived(@NonNull Boolean z) {
+    public boolean isWaitingForCoordinatorMessage() {
+        return isWaitingForCoordinatorMessage.get();
+    }
+
+    public void setCoordinatorMessageReceived(@NonNull Boolean z) {
         coordinatorMessageReceived.set(z);
     }
 
@@ -382,6 +390,60 @@ public class FastBully {
             logger.info("Coordinator message timeout stopped!");
             isWaitingForCoordinatorMessage.set(false);
             coordinatorMessageTimeoutDisposable.dispose();
+        }
+    }
+
+    public synchronized void waitForNominationOrCoordinationMessage() {
+        if (!isWaitingForNominationOrCoordinatorMessage.get()) {
+            isWaitingForNominationOrCoordinatorMessage.set(true);
+            nominationOrCoordinatorMessageReceived.set(false);
+            startNominationOrCoordinationMessageTimeout();
+        }
+    }
+
+    private void startNominationOrCoordinationMessageTimeout() {
+        nominationOrCoordinationMessageTimeoutDisposable = (Completable.timer(Constants.COORDINATOR_MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS)
+                .subscribeWith(new DisposableCompletableObserver() {
+                                   @Override
+                                   public void onStart() {
+                                       logger.info("Nomination or coordination message timeout started!");
+                                   }
+
+                                   @Override
+                                   public void onError(@NonNull Throwable error) {
+                                       logger.error(error.getMessage());
+                                   }
+
+                                   @Override
+                                   public void onComplete() {
+                                       logger.info("Nomination or coordination message timeout completed!");
+                                       logger.info("No nomination or coordination messages received, Repeat");
+                                       if (!nominationOrCoordinatorMessageReceived.get()) {
+                                           if (electionReady.get()){ // no election is running
+                                               // restart election procedure
+                                               startElection();
+                                           }
+                                       }
+                                       stopNominationOrCoordinationMessageTimeout();
+                                   }
+                               }
+                )
+        );
+    }
+
+    public boolean isWaitingForNominationOrCoordinationMessage() {
+        return isWaitingForNominationOrCoordinatorMessage.get();
+    }
+
+    public void setNominationOrCoordinationMessageReceived(@NonNull Boolean z) {
+        nominationOrCoordinatorMessageReceived.set(z);
+    }
+
+    public synchronized void stopNominationOrCoordinationMessageTimeout() {
+        if (isWaitingForNominationOrCoordinatorMessage.get() && !nominationOrCoordinationMessageTimeoutDisposable.isDisposed()) {
+            logger.info("Nomination or Coordinator message timeout stopped!");
+            isWaitingForNominationOrCoordinatorMessage.set(false);
+            nominationOrCoordinationMessageTimeoutDisposable.dispose();
         }
     }
 }
