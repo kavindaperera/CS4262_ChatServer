@@ -105,6 +105,7 @@ public class ServerHandler extends Thread{
                 }
                 case "informServerFailure":{
                     logger.debug("Received informServerFailure message: " + server.getServerId());
+                    ServerState.getInstance().removeServerFromServerView(server);
                     // TODO -  handle server failure
                     break;
                 }
