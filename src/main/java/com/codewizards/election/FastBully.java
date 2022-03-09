@@ -62,6 +62,7 @@ public class FastBully {
     public String notifyIamUp(List<Server> serverList) {
         logger.info("IamUp!!!");
         isWaitingForViewMessage.set(true);
+        viewMessagesReceived.set(false);
         for (Server server : serverList) {
             sendIamUpMessage(server);
         }
@@ -283,14 +284,16 @@ public class FastBully {
                                            // stops its election procedure
                                            electionReady.set(true);
                                        } else {
+
+                                           isWaitingForCoordinatorMessage.set(true);
+                                           coordinatorMessageReceived.set(false);
+
                                            // determines the highest priority number of the answering processes
                                            // and sends a nomination message to that process.
                                            FastBully.getInstance().sendNominationMessage(answerStatus.pollFirstEntry().getKey());
 
                                            // waits for a coordinator message for the interval T3.
-                                           isWaitingForCoordinatorMessage.set(true);
-                                           nominationOrCoordinatorMessageReceived.set(false);
-                                           FastBully.getInstance().starCoordinatorMessageTimeout();
+                                           FastBully.getInstance().startCoordinatorMessageTimeout();
                                        }
                                        stopAnswerMessageTimeout();
                                    }
@@ -342,7 +345,7 @@ public class FastBully {
         }
     }
 
-    private synchronized void starCoordinatorMessageTimeout() {
+    private synchronized void startCoordinatorMessageTimeout() {
         coordinatorMessageTimeoutDisposable = (Completable.timer(Constants.COORDINATOR_MESSAGE_TIMEOUT, TimeUnit.MILLISECONDS)
                 .subscribeWith(new DisposableCompletableObserver() {
                                    @Override

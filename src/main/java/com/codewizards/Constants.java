@@ -13,7 +13,7 @@ public class Constants {
     public static final long HEARTBEAT_WAIT_INTERVAL = HEARTBEAT_SND_INTERVAL * 2;
 
     public static long getT4(@NonNull Integer priorityNumber) {
-        return 8000L / (2L * priorityNumber);
+        return 20000L / (1L * priorityNumber);
     }
 
 }
