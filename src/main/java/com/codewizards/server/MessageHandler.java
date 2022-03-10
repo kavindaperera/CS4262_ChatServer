@@ -119,6 +119,13 @@ public class MessageHandler {
         ClientManager.removeFromGlobalClientList(clientId);
     }
 
+    public void respondToInformClientTransferMessage(JSONObject receivedMessage) {
+        String serverId = (String) receivedMessage.get("serverId");
+        String identity = (String) receivedMessage.get("identity");
+
+        ClientManager.addToGlobalClientsList(identity, serverId);
+    }
+
     public void respondToRequestRoomIdApprovalMessage(JSONObject receivedMessage) throws InterruptedException {
         String requestedID = (String) receivedMessage.get("identity");
         String clientID = (String) receivedMessage.get("clientId");
