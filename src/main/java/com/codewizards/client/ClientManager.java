@@ -63,4 +63,12 @@ public class ClientManager {
         globalClientsList.remove(clientID);
     }
 
+    public static void removeClientsOnFailure(String serverID) {
+        synchronized (globalClientsList) {
+            globalClientsList.entrySet().removeIf(
+                    entry -> entry.getValue()
+                            .compareTo(serverID) == 0);
+        }
+    }
+
 }

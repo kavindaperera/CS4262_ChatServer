@@ -87,4 +87,12 @@ public class RoomManager {
             }
         }
     }
+
+    public static void removeRoomsOnFailure(String serverID) {
+        synchronized (globalRoomsList) {
+            globalRoomsList.entrySet().removeIf(
+                    entry -> entry.getValue()
+                            .compareTo(serverID) == 0);
+        }
+    }
 }
