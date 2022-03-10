@@ -73,6 +73,8 @@ public class MessageHandler {
         logger.info("Received IamUp from " + server.getServerId());
         FastBully.getInstance().sendViewMessage(server);
         ServerState.getInstance().addServerToServerView(server);
+        // Add MainHall of the server upon receiving IamUp message
+        RoomManager.addToGlobalRoomsList("MainHall-" + server.getServerId(), server.getServerId());
     }
 
     public void respondToViewMessage(@NonNull Server server, @NonNull JSONObject message)  {
@@ -83,6 +85,8 @@ public class MessageHandler {
             view.add(server.getServerId());
             ServerState.getInstance().compareAndSetView(view);
         }
+        // Add MainHall of the server upon receiving View message
+        RoomManager.addToGlobalRoomsList("MainHall-" + server.getServerId(), server.getServerId());
     }
 
     public void respondToRequestClientIdApprovalMessage(JSONObject receivedMessage) throws InterruptedException {
