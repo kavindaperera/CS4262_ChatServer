@@ -147,6 +147,14 @@ public class ServerMessage {
         return informRoomIdDeletion;
     }
 
+    public static JSONObject getInformClientTransferMessage(@NonNull String serverId, @NonNull String clientId) {
+        JSONObject informClientTransfer = new JSONObject();
+        informClientTransfer.put("type", "informClientTransfer");
+        informClientTransfer.put("serverId", serverId);
+        informClientTransfer.put("identity", clientId);
+        return informClientTransfer;
+    }
+
     @SuppressWarnings("unchecked")
     public static JSONObject getInformRoomIdCreationMessage(@NonNull String serverId, @NonNull String requestedId) {
         JSONObject informRoomIdCreation = new JSONObject();
