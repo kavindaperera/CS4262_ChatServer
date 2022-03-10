@@ -76,6 +76,10 @@ public class ServerHandler extends Thread{
                     this.messageHandler.respondToInformClientIdCreationMessage(message);
                     break;
                 }
+                case "informClientTransfer": {
+                    this.messageHandler.respondToInformClientTransferMessage(message);
+                    break;
+                }
                 case "deleteclient": {
                     this.messageHandler.respondToInformClientIdDeletionMessage(message);
                     break;
