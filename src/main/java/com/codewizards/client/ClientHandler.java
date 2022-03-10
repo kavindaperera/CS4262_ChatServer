@@ -103,6 +103,7 @@ public class ClientHandler extends Thread{
         RoomManager.getLocalRoomsList().get(tempMessage.get("roomid").toString()).getClientHashMap().put(tempMessage.get("identity").toString(), this.clientState);
         ClientManager.addToLocalClientsList(tempMessage.get("identity").toString());
         ClientManager.addToGlobalClientsList(tempMessage.get("identity").toString(), Main.SERVER_ID);
+        informServersClientTransfer(tempMessage.get("identity").toString());
     }
 
     public void doUpdatesWhenDeletingRoom(String roomId) throws IOException {
@@ -187,6 +188,22 @@ public class ClientHandler extends Thread{
                 Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
                 DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
                 dataOutputStream.write((ServerMessage.getInformClientIdDeletionMessage(ServerState.getInstance().getOwnServer().getServerId(), clientId) + "\n").getBytes(StandardCharsets.UTF_8));
+                dataOutputStream.flush();
+
+            } catch (IOException e) {
+                logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
+            }
+
+        }
+    }
+
+    public void informServersClientTransfer(String clientId) {
+        for (Server server : ServerState.getInstance().getServerListAsArrayList()) {
+            logger.info("Send informClientTransfer to: " + server.getServerId());
+            try {
+                Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                dataOutputStream.write((ServerMessage.getInformClientTransferMessage(ServerState.getInstance().getOwnServer().getServerId(), clientId) + "\n").getBytes(StandardCharsets.UTF_8));
                 dataOutputStream.flush();
 
             } catch (IOException e) {
