@@ -150,11 +150,17 @@ public class MessageHandler {
     }
 
     public void respondToInformRoomIdDeletionMessage(JSONObject receivedMessage) {
-        String roomId = (String) receivedMessage.get("roomid");
+        String roomId = (String) receivedMessage.get("serverId");
 
         RoomManager.removeFromGlobalRoomsList(roomId);
     }
 
+    public void respondToInformServerFailureMessage(JSONObject receivedMessage) {
+        String serverId = (String) receivedMessage.get("serverId");
+
+        ClientManager.removeClientsOnFailure(serverId);
+        RoomManager.removeRoomsOnFailure(serverId);
+    }
 
     private void sendApproveClientIdMessage(Server server, String message) throws InterruptedException {
         logger.info("Send approveClientId to: " + server.getServerId());
