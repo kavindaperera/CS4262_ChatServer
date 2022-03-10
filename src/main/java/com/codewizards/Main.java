@@ -98,7 +98,6 @@ public class Main {
 
     private static void initialize() {
         getServerConfigurations();
-        RoomManager.initializeGlobalRoomsList();
         String mainHallId = "MainHall-" + SERVER_ID;
         RoomManager.createChatRoom(mainHallId, "");
     }
