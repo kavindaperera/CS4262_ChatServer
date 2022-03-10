@@ -1,12 +1,18 @@
-package com.codewizards.server;
+package com.codewizards.client;
 
-
-import com.codewizards.Main;
-import com.codewizards.client.ClientManager;
-import com.codewizards.election.FastBully;
+import com.codewizards.Constants;
+import com.codewizards.message.ClientMessage;
 import com.codewizards.message.ServerMessage;
+import com.codewizards.room.Room;
 import com.codewizards.room.RoomManager;
+import com.codewizards.server.Server;
+import com.codewizards.server.ServerState;
+import com.codewizards.utils.Utils;
+import io.reactivex.Completable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.observers.DisposableCompletableObserver;
 import lombok.NonNull;
+import lombok.Setter;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 
@@ -15,170 +21,153 @@ import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 
 public class MessageHandler {
 
     public static Logger logger = Logger.getLogger(MessageHandler.class.getName());
 
+    //private Disposable idApprovalTimeoutDisposable;
+
+    //private AtomicBoolean isWaitingForIdApproval = new AtomicBoolean(false);
+    @Setter
+    private boolean isWaitingForIdApproval = false;
+
+    //private AtomicBoolean idApprovalReceived = new AtomicBoolean(false);
+    @Setter
+    private boolean idApprovalReceived = false;
+
     public MessageHandler() {
 
     }
 
-    public void respondToElectionMessage(@NonNull Server server) {
-        logger.debug("Received election message from: " + server.getServerId());
-        FastBully.getInstance().sendAnswerMessage(server);
-        FastBully.getInstance().waitForNominationOrCoordinationMessage();
-    }
+    public JSONObject respondToIdentityRequest(String identity) {
+        logger.info("Client requested for identity => " + identity);
 
-    public void respondToNominationMessage(@NonNull Server server) throws InterruptedException {
-        logger.debug("Received nomination message from: " + server.getServerId());
-
-        if (FastBully.getInstance().isWaitingForNominationOrCoordinationMessage()){
-            FastBully.getInstance().setNominationOrCoordinationMessageReceived(true);
-        }
-
-        // sends a coordinator message to all the processes with lower priority numbers
-        FastBully.getInstance().notifyNewCoordinator(ServerState.getInstance().getServersWithLowerPriority());
-
-        // stops its election procedure
-        FastBully.getInstance().setElectionReady(true);
-    }
-
-    public void respondToAnswerMessage(@NonNull Server server) {
-        logger.debug("Received answer message from: " + server.getServerId());
-        if (FastBully.getInstance().isWaitingForAnswerMessage()){
-            FastBully.getInstance().setAnswerMessageReceived(server, true);
-        }
-    }
-
-    public void respondToCoordinatorMessage(@NonNull Server server) {
-        logger.info("Received coordinator message from " + server.getServerId());
-
-        if (FastBully.getInstance().isWaitingForCoordinatorMessage()){
-            FastBully.getInstance().setCoordinatorMessageReceived(true);
-        } else if (FastBully.getInstance().isWaitingForNominationOrCoordinationMessage()){
-            FastBully.getInstance().setNominationOrCoordinationMessageReceived(true);
-        }
-
-        // admit the new coordinator.
-        FastBully.getInstance().setCoordinator(server);
-
-        // stops its election procedure
-        FastBully.getInstance().setElectionReady(true);
-        FastBully.getInstance().stopCoordinationMessageTimeout();
-        FastBully.getInstance().stopAnswerMessageTimeout();
-    }
-
-    public void respondToIamUpMessage(@NonNull Server server) throws InterruptedException {
-        logger.info("Received IamUp from " + server.getServerId());
-        FastBully.getInstance().sendViewMessage(server);
-        ServerState.getInstance().addServerToServerView(server);
-        // Add MainHall of the server upon receiving IamUp message
-        RoomManager.addToGlobalRoomsList("MainHall-" + server.getServerId(), server.getServerId());
-    }
-
-    public void respondToViewMessage(@NonNull Server server, @NonNull JSONObject message)  {
-        List<String> view = (List<String>) message.get("processes");
-        logger.info("Received view from " + server.getServerId() + " | view: " + view);
-        if (FastBully.getInstance().isWaitingForViewMessage()){
-            FastBully.getInstance().setViewMessagesReceived(true);
-            view.add(server.getServerId());
-            ServerState.getInstance().compareAndSetView(view);
-        }
-        // Add MainHall of the server upon receiving View message
-        RoomManager.addToGlobalRoomsList("MainHall-" + server.getServerId(), server.getServerId());
-    }
-
-    public void respondToRequestClientIdApprovalMessage(JSONObject receivedMessage) throws InterruptedException {
-        String requestedID = (String) receivedMessage.get("identity");
-        JSONObject response;
-        if (ClientManager.checkClientIdentityAvailability(requestedID)){
-            response = ServerMessage.getApproveClientIDMessage(Main.SERVER_ID,"true", requestedID);
-            ClientManager.addToGlobalClientsList(requestedID, receivedMessage.get("serverId").toString());
+        if (Utils.validateIdentifier(identity)) {
+            if (ClientManager.checkClientIdentityAvailability(identity)) {
+                if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
+                    sendRequestClientIdApprovalMessage(ServerState.getInstance().getCoordinator(), identity);
+                    startIdApprovalTimeout();
+                } else {
+                    idApprovalReceived = true;
+                }
+            }
         } else {
-            response = ServerMessage.getApproveClientIDMessage(Main.SERVER_ID,"false", requestedID);
+            idApprovalReceived = false;
         }
 
-        sendApproveClientIdMessage(ServerState.getInstance().getServerByServerId(receivedMessage.get("serverId").toString()), response.toJSONString());
+        if (isWaitingForIdApproval) {
+            logger.info("Started a new Election");
+            //start new election
+        }
+        JSONObject response = ClientMessage.getAllowNewIdentityResponse(String.valueOf(idApprovalReceived));
+
+        return response;
     }
 
-    public void respondToApproveClientIdMessage(JSONObject receivedMessage) {
-        String approved = (String) receivedMessage.get("approved");
-        String identity = (String) receivedMessage.get("identity");
+    public JSONObject respondToListRequest() {
+        List<String> globalRoomsList = RoomManager.getGlobalRoomsListAsArrayList();
+        JSONObject response = ClientMessage.getListResponse(globalRoomsList);
 
-        ClientManager.getClientHandler(identity).getMessageHandler().setIdApprovalReceived(Boolean.parseBoolean(approved));
-        ClientManager.getClientHandler(identity).getMessageHandler().setWaitingForIdApproval(false);
+        return response;
     }
 
-    public void respondToInformClientIdCreationMessage(JSONObject receivedMessage) {
-        String serverId = (String) receivedMessage.get("serverId");
-        String identity = (String) receivedMessage.get("identity");
+    public JSONObject respondToWhoRequest(String currentRoomId) {
+        Room currentRoom = RoomManager.getLocalRoomsList().get(currentRoomId);
+        JSONObject response = ClientMessage.getRoomContents(currentRoomId, currentRoom.getCreatorId(), currentRoom.getClientsAsList());
 
-        ClientManager.addToGlobalClientsList(identity, serverId);
+        return response;
     }
 
-    public void respondToInformClientIdDeletionMessage(JSONObject receivedMessage) {
-        String clientId = (String) receivedMessage.get("clientId");
+    public JSONObject respondToCreateRoomRequest(String roomId, ClientState clientState) {
+        logger.info("Client requested to create new Room => " + roomId);
 
-        ClientManager.removeFromGlobalClientList(clientId);
-    }
-
-    public void respondToInformClientTransferMessage(JSONObject receivedMessage) {
-        String serverId = (String) receivedMessage.get("serverId");
-        String identity = (String) receivedMessage.get("identity");
-
-        ClientManager.addToGlobalClientsList(identity, serverId);
-    }
-
-    public void respondToRequestRoomIdApprovalMessage(JSONObject receivedMessage) throws InterruptedException {
-        String requestedID = (String) receivedMessage.get("identity");
-        String clientID = (String) receivedMessage.get("clientId");
-
-        JSONObject response;
-        if (RoomManager.checkRoomIdAvailability(requestedID)){
-            response = ServerMessage.getApproveRoomIDMessage(Main.SERVER_ID,"true", requestedID, clientID);
-            RoomManager.addToGlobalRoomsList(requestedID, receivedMessage.get("serverId").toString());
+        if (Utils.validateIdentifier(roomId)) {
+            if (clientState.getOwnRoomId().equalsIgnoreCase("") && RoomManager.checkRoomIdAvailability(roomId)) {
+                if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
+                    sendRequestRoomIdApprovalMessage(ServerState.getInstance().getCoordinator(), roomId, clientState.getClientId());
+                    startIdApprovalTimeout();
+                } else {
+                    idApprovalReceived = true;
+                }
+            } else {
+                idApprovalReceived = false;
+            }
         } else {
-            response = ServerMessage.getApproveRoomIDMessage(Main.SERVER_ID,"false", requestedID, clientID);
+            idApprovalReceived = false;
         }
 
-        sendApproveRoomIdMessage(ServerState.getInstance().getServerByServerId(receivedMessage.get("serverId").toString()), response.toJSONString());
+        if (isWaitingForIdApproval) {
+            logger.info("Started a new Election");
+            //start new election
+        }
+        JSONObject response = ClientMessage.getCreateRoomResponse(roomId, String.valueOf(idApprovalReceived));
+
+        return response;
     }
 
-    public void respondToApproveRoomIdMessage(JSONObject receivedMessage) {
-        String approved = (String) receivedMessage.get("approved");
-        String clientId = (String) receivedMessage.get("clientId");
+    public JSONObject respondToJoinRoomRequest(String roomId, ClientState clientState) {
+        logger.info("Client requested to join Room => " + roomId);
+        JSONObject response;
+        if (clientState.getOwnRoomId().equalsIgnoreCase("") && !RoomManager.checkRoomIdAvailability(roomId)) {
+            if (!RoomManager.checkLocalRoomIdAvailability(roomId)) {
+                response = ClientMessage.getRoomChangeBroadcast(clientState.getClientId(), clientState.getRoomId(), roomId);
+            } else {
+                Server server = ServerState.getInstance().getServerByServerId(RoomManager.getServerOfRoom(roomId));
+                response = ClientMessage.getRouteResponse(roomId, server.getServerAddress(), String.valueOf(server.getClientPort()));
+            }
+        } else {
+            response = ClientMessage.getRoomChangeBroadcast(clientState.getClientId(), roomId, roomId);
+        }
 
-        ClientManager.getClientHandler(clientId).getMessageHandler().setIdApprovalReceived(Boolean.parseBoolean(approved));
-        ClientManager.getClientHandler(clientId).getMessageHandler().setWaitingForIdApproval(false);
+        return response;
     }
 
-    public void respondToInformRoomIdCreationMessage(JSONObject receivedMessage) {
-        String serverId = (String) receivedMessage.get("serverId");
-        String identity = (String) receivedMessage.get("identity");
+    public JSONObject respondToMoveJoinRequest(String former, String roomId, String identity){
+        JSONObject response;
+        if (!RoomManager.checkLocalRoomIdAvailability(roomId)) {
+            response = ClientMessage.getRoomChangeBroadcast(identity, former, roomId);
+        } else {
+            response = ClientMessage.getRoomChangeBroadcast(identity, former, RoomManager.MAINHALL_ID);
+        }
 
-        RoomManager.addToGlobalRoomsList(identity, serverId);
+        return response;
     }
 
-    public void respondToInformRoomIdDeletionMessage(JSONObject receivedMessage) {
-        String roomId = (String) receivedMessage.get("serverId");
+    public JSONObject respondToDeleteRoomRequest(String roomId, ClientState clientState) {
+        logger.info("Client requested to delete Room => " + roomId);
+        JSONObject response;
+        if (clientState.getOwnRoomId().equalsIgnoreCase(roomId)) {
+            response = ClientMessage.getDeleteRoomResponse(roomId, "true");
+        } else {
+            response = ClientMessage.getDeleteRoomResponse(roomId, "false");
+        }
 
-        RoomManager.removeFromGlobalRoomsList(roomId);
+        return response;
     }
 
-    public void respondToInformServerFailureMessage(JSONObject receivedMessage) {
-        String serverId = (String) receivedMessage.get("serverId");
+    public void respondToQuitRequest() {
 
-        ClientManager.removeClientsOnFailure(serverId);
-        RoomManager.removeRoomsOnFailure(serverId);
     }
 
-    private void sendApproveClientIdMessage(Server server, String message) throws InterruptedException {
-        logger.info("Send approveClientId to: " + server.getServerId());
+    public JSONObject respondToReceivedMessage(JSONObject receivedMessage, String clientId) {
+        String content = (String) receivedMessage.get("content");
+        logger.info(clientId + " sent message => " + content);
+
+        JSONObject broadcastMessage = ClientMessage.getMessageBroadcast(clientId, content);
+
+        return broadcastMessage;
+    }
+
+    private void sendRequestClientIdApprovalMessage(Server server, String identity) {
+        logger.info("Send requestClientIdApproval to: " + server.getServerId());
         try {
             Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            dataOutputStream.write((message + "\n").getBytes(StandardCharsets.UTF_8));
+            dataOutputStream.write((ServerMessage.getRequestClientIdApprovalMessage(ServerState.getInstance().getOwnServer().getServerId(), identity) + "\n").getBytes(StandardCharsets.UTF_8));
             dataOutputStream.flush();
 
         } catch (IOException e) {
@@ -186,16 +175,69 @@ public class MessageHandler {
         }
     }
 
-    private void sendApproveRoomIdMessage(Server server, String message) throws InterruptedException {
-        logger.info("Send approveRoomId to: " + server.getServerId());
+    private void sendRequestRoomIdApprovalMessage(Server server, String identity, String clientId) {
+        logger.info("Send requestRoomIdApproval to: " + server.getServerId());
         try {
             Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            dataOutputStream.write((message + "\n").getBytes(StandardCharsets.UTF_8));
+            dataOutputStream.write((ServerMessage.getRequestRoomIdApprovalMessage(ServerState.getInstance().getOwnServer().getServerId(), identity, clientId) + "\n").getBytes(StandardCharsets.UTF_8));
             dataOutputStream.flush();
 
         } catch (IOException e) {
             logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
+        }
+    }
+
+    /*
+    private void startIdApprovalTimeout() {
+        idApprovalTimeoutDisposable = (Completable.timer(Constants.REQUEST_APPROVAL_TIMEOUT, TimeUnit.MILLISECONDS)
+                .subscribeWith(new DisposableCompletableObserver() {
+                                   @Override
+                                   public void onStart() {
+                                       logger.info("request identity approval timeout started!");
+                                       isWaitingForIdApproval.set(true);
+                                   }
+
+                                   @Override
+                                   public void onError(@NonNull Throwable error) {
+                                       error.printStackTrace();
+                                   }
+
+                                   @Override
+                                   public void onComplete() {
+                                       logger.info("request identity approval timeout completed!");
+                                       if (!idApprovalReceived.get()) {
+                                           logger.info("Started a new Election");
+                                           //start new election
+                                       }
+                                       stopIdApprovalTimeout();
+                                   }
+                               }
+                )
+        );
+    }
+
+    public void stopIdApprovalTimeout() {
+        if (isWaitingForIdApproval.get() && !idApprovalTimeoutDisposable.isDisposed()) {
+            logger.info("request identity approval timeout stopped!");
+            isWaitingForIdApproval.set(false);
+            idApprovalTimeoutDisposable.dispose();
+        }
+    }
+
+    public void setIdApprovalReceived(@NonNull Boolean approval) {
+        idApprovalReceived.set(approval);
+    }
+
+    */
+
+    private void startIdApprovalTimeout() {
+        isWaitingForIdApproval = true;
+        long start = System.currentTimeMillis();
+        long elapsedTime = 0L;
+
+        while (isWaitingForIdApproval && (elapsedTime < Constants.REQUEST_APPROVAL_TIMEOUT)) {
+            elapsedTime = System.currentTimeMillis() - start;
         }
     }
 
