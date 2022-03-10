@@ -1,6 +1,8 @@
 package com.codewizards.election;
 
 import com.codewizards.Constants;
+import com.codewizards.client.ClientManager;
+import com.codewizards.room.RoomManager;
 import com.codewizards.server.MessageSender;
 import com.codewizards.server.Server;
 import com.codewizards.server.ServerState;
@@ -104,6 +106,9 @@ public class Leader {
     private void handleHeartbeatSendFailure(Server server) {
         logger.info("Server " + server.getServerId() + " is down!");
         ServerState.getInstance().removeServerFromServerView(server);
+        // self update rooms & clients
+        ClientManager.removeClientsOnFailure(server.getServerId());
+        RoomManager.removeRoomsOnFailure(server.getServerId());
         // broadcast inform server failure message
         for (Server server1 : ServerState.getInstance().getServerViewAsServerArrayList()){
             try {
