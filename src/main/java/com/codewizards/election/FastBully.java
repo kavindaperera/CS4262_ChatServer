@@ -282,7 +282,7 @@ public class FastBully {
                                            FastBully.getInstance().notifyNewCoordinator(ServerState.getInstance().getServersWithLowerPriority());
 
                                            // stops its election procedure
-                                           electionReady.set(true);
+                                           setElectionReady(true);
                                        } else {
 
                                            isWaitingForCoordinatorMessage.set(true);
@@ -424,7 +424,7 @@ public class FastBully {
                                            logger.info("No nomination or coordination messages received, Restart");
                                            if (electionReady.get()){ // no election is running
                                                // restart election procedure
-                                               startElection();
+                                               FastBully.getInstance().startElection();
                                            }
                                        }
                                        stopNominationOrCoordinationMessageTimeout();
