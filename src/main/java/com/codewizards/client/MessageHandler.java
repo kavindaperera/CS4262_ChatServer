@@ -1,6 +1,7 @@
 package com.codewizards.client;
 
 import com.codewizards.Constants;
+import com.codewizards.election.FastBully;
 import com.codewizards.message.ClientMessage;
 import com.codewizards.message.ServerMessage;
 import com.codewizards.room.Room;
@@ -48,21 +49,28 @@ public class MessageHandler {
 
         if (Utils.validateIdentifier(identity)) {
             if (ClientManager.checkClientIdentityAvailability(identity)) {
-                if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
-                    sendRequestClientIdApprovalMessage(ServerState.getInstance().getCoordinator(), identity);
-                    startIdApprovalTimeout();
-                } else {
-                    idApprovalReceived = true;
+                while (!idApprovalReceived) {
+                    if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
+                        long lastUpdatedTs = ServerState.getInstance().getCoordinatorChangedTs();
+                        sendRequestClientIdApprovalMessage(ServerState.getInstance().getCoordinator(), identity);
+                        startIdApprovalTimeout();
+
+                        if (isWaitingForIdApproval) {
+                            FastBully.getInstance().startElection();
+                            while (lastUpdatedTs == ServerState.getInstance().getCoordinatorChangedTs()) {
+                                //stay in a while loop checking whether last updated time of coordinator field is changed
+                            }
+                        }
+
+                    } else {
+                        idApprovalReceived = true;
+                    }
                 }
             }
         } else {
             idApprovalReceived = false;
         }
 
-        if (isWaitingForIdApproval) {
-            logger.info("Started a new Election");
-            //start new election
-        }
         JSONObject response = ClientMessage.getAllowNewIdentityResponse(String.valueOf(idApprovalReceived));
 
         return response;
@@ -87,12 +95,24 @@ public class MessageHandler {
 
         if (Utils.validateIdentifier(roomId)) {
             if (clientState.getOwnRoomId().equalsIgnoreCase("") && RoomManager.checkRoomIdAvailability(roomId)) {
-                if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
-                    sendRequestRoomIdApprovalMessage(ServerState.getInstance().getCoordinator(), roomId, clientState.getClientId());
-                    startIdApprovalTimeout();
-                } else {
-                    idApprovalReceived = true;
+                while (!idApprovalReceived) {
+                    if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
+                        long lastUpdatedTs = ServerState.getInstance().getCoordinatorChangedTs();
+                        sendRequestRoomIdApprovalMessage(ServerState.getInstance().getCoordinator(), roomId, clientState.getClientId());
+                        startIdApprovalTimeout();
+
+                        if (isWaitingForIdApproval) {
+                            FastBully.getInstance().startElection();
+                            while (lastUpdatedTs == ServerState.getInstance().getCoordinatorChangedTs()) {
+                                //stay in a while loop checking whether last updated time of coordinator field is changed
+                            }
+                        }
+
+                    } else {
+                        idApprovalReceived = true;
+                    }
                 }
+
             } else {
                 idApprovalReceived = false;
             }
@@ -100,10 +120,6 @@ public class MessageHandler {
             idApprovalReceived = false;
         }
 
-        if (isWaitingForIdApproval) {
-            logger.info("Started a new Election");
-            //start new election
-        }
         JSONObject response = ClientMessage.getCreateRoomResponse(roomId, String.valueOf(idApprovalReceived));
 
         return response;
