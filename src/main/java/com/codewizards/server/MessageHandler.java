@@ -65,8 +65,6 @@ public class MessageHandler {
 
         // stops its election procedure
         FastBully.getInstance().setElectionReady(true);
-        FastBully.getInstance().stopCoordinationMessageTimeout();
-        FastBully.getInstance().stopAnswerMessageTimeout();
     }
 
     public void respondToIamUpMessage(@NonNull Server server) throws InterruptedException {
