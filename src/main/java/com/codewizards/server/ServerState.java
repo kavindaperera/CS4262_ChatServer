@@ -2,7 +2,6 @@ package com.codewizards.server;
 
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
@@ -26,8 +25,10 @@ public class ServerState {
     private Server ownServer;
 
     @Getter
-    @Setter
     private Server coordinator;
+
+    @Getter
+    private long coordinatorChangedTs;
 
     private ServerState() {
 
@@ -127,6 +128,11 @@ public class ServerState {
 
     public int getOwnServerPriority(){
         return Integer.parseInt(ownServer.getServerId().substring(1));
+    }
+
+    public void setCoordinator(@NonNull Server coordinator) {
+        this.coordinator = coordinator;
+        this.coordinatorChangedTs = System.currentTimeMillis();
     }
 
 }
