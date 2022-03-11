@@ -282,7 +282,7 @@ public class FastBully {
                                            FastBully.getInstance().notifyNewCoordinator(ServerState.getInstance().getServersWithLowerPriority());
 
                                            // stops its election procedure
-                                           setElectionReady(true);
+                                           FastBully.getInstance().setElectionReady(true);
                                        } else {
 
                                            isWaitingForCoordinatorMessage.set(true);
@@ -342,6 +342,9 @@ public class FastBully {
 
         if (z) {
             // TODO - stop all timeouts
+            FastBully.getInstance().stopCoordinationMessageTimeout();
+            FastBully.getInstance().stopAnswerMessageTimeout();
+            FastBully.getInstance().stopNominationOrCoordinationMessageTimeout();
         }
     }
 
