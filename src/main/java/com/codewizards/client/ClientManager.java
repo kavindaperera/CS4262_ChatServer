@@ -11,7 +11,8 @@ public class ClientManager {
 
     public static Logger logger = Logger.getLogger(ClientManager.class.getName());
 
-    private static final ConcurrentHashMap<String, String> globalClientsList = new ConcurrentHashMap<>();
+    @Getter
+    private static final ConcurrentHashMap<String, String> globalClientsList = new ConcurrentHashMap<>(); // <clientID, serverID>
 
     private static final ConcurrentHashMap<String, ClientHandler> clientHandlersList = new ConcurrentHashMap<>();
 

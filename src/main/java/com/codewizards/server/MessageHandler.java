@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 public class MessageHandler {
 
@@ -75,9 +76,15 @@ public class MessageHandler {
         RoomManager.addToGlobalRoomsList("MainHall-" + server.getServerId(), server.getServerId());
     }
 
+    @SuppressWarnings("unchecked")
     public void respondToViewMessage(@NonNull Server server, @NonNull JSONObject message)  {
         List<String> view = (List<String>) message.get("processes");
-        logger.info("Received view from " + server.getServerId() + " | view: " + view);
+        Map<String, String> globalRoomList = (Map<String, String>) message.get("globalRoomList");
+        Map<String, String> globalClientList = (Map<String, String>) message.get("globalClientList");
+        logger.info("Received view from " + server.getServerId());
+        logger.info("processes: " + view);
+        logger.info("globalRoomList: " + globalRoomList);
+        logger.info("globalClientList: " + globalClientList);
         if (FastBully.getInstance().isWaitingForViewMessage()){
             FastBully.getInstance().setViewMessagesReceived(true);
             view.add(server.getServerId());

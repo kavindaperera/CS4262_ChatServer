@@ -1,6 +1,8 @@
 package com.codewizards.server;
 
+import com.codewizards.client.ClientManager;
 import com.codewizards.message.ServerMessage;
+import com.codewizards.room.RoomManager;
 import lombok.NonNull;
 
 import java.io.DataOutputStream;
@@ -13,7 +15,11 @@ public class MessageSender {
     public static void sendViewMessage(@NonNull Server server) throws IOException {
         Socket socket = new Socket(server.getServerAddress(), server.getCoordinationPort());
         DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-        dataOutputStream.write((ServerMessage.getViewMessage(ServerState.getInstance().getOwnServer().getServerId(), ServerState.getInstance().getServerViewAsArrayList()) + "\n").getBytes(StandardCharsets.UTF_8));
+        dataOutputStream.write((
+                ServerMessage.getViewMessage(ServerState.getInstance().getOwnServer().getServerId(),
+                ServerState.getInstance().getServerViewAsArrayList(),
+                RoomManager.getGlobalRoomsList(),
+                ClientManager.getGlobalClientsList()) + "\n").getBytes(StandardCharsets.UTF_8));
         dataOutputStream.flush();
     }
 
