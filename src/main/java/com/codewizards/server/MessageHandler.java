@@ -14,6 +14,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -89,9 +90,27 @@ public class MessageHandler {
             FastBully.getInstance().setViewMessagesReceived(true);
             view.add(server.getServerId());
             ServerState.getInstance().compareAndSetView(view);
+
+            Iterator<String> clientKeys = globalClientList.keySet().iterator();
+            String clientKey;
+            while(clientKeys.hasNext()) {
+                clientKey = clientKeys.next();
+                if (ClientManager.checkClientIdentityAvailability(clientKey)) {
+                    ClientManager.addToGlobalClientsList(clientKey, globalClientList.get(clientKey));
+                }
+            }
+
+            Iterator<String> roomKeys = globalRoomList.keySet().iterator();
+            String roomKey;
+            while(roomKeys.hasNext()) {
+                roomKey = roomKeys.next();
+                if (RoomManager.checkRoomIdAvailability(roomKey)) {
+                    RoomManager.addToGlobalRoomsList(roomKey, globalRoomList.get(roomKey));
+                }
+            }
         }
         // Add MainHall of the server upon receiving View message
-        RoomManager.addToGlobalRoomsList("MainHall-" + server.getServerId(), server.getServerId());
+        //RoomManager.addToGlobalRoomsList("MainHall-" + server.getServerId(), server.getServerId());
     }
 
     public void respondToRequestClientIdApprovalMessage(JSONObject receivedMessage) throws InterruptedException {
