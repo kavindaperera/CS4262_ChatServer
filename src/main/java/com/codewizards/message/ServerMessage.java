@@ -4,6 +4,7 @@ import lombok.NonNull;
 import org.json.simple.JSONObject;
 
 import java.util.List;
+import java.util.Map;
 
 public class ServerMessage {
 
@@ -81,11 +82,13 @@ public class ServerMessage {
      * @return view message
      */
     @SuppressWarnings("unchecked")
-    public static JSONObject getViewMessage(@NonNull String serverId, @NonNull List<String> processesList) {
+    public static JSONObject getViewMessage(@NonNull String serverId, @NonNull List<String> processesList, @NonNull Map<String, String> globalRoomList, @NonNull Map<String, String> globalClientList) {
         JSONObject view = new JSONObject();
         view.put("type", "view");
         view.put("serverId", serverId);
         view.put("processes", processesList);
+        view.put("globalRoomList", globalRoomList);
+        view.put("globalClientList", globalClientList);
         return view;
     }
 

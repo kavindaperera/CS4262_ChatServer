@@ -2,6 +2,7 @@ package com.codewizards.room;
 
 import com.codewizards.Main;
 import com.codewizards.server.ServerState;
+import lombok.Getter;
 import lombok.NonNull;
 import org.apache.log4j.Logger;
 
@@ -16,7 +17,8 @@ public class RoomManager {
 
     public static String MAINHALL_ID;
 
-    private static ConcurrentHashMap<String, String> globalRoomsList = new ConcurrentHashMap<>();
+    @Getter
+    private static ConcurrentHashMap<String, String> globalRoomsList = new ConcurrentHashMap<>(); // <roomID, serverID>
 
     private static ConcurrentHashMap<String, Room> localRoomsList = new ConcurrentHashMap<>();
 
