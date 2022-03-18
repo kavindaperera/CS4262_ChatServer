@@ -8,7 +8,7 @@ java -jar ChatServer.jar -i serverid -f servers_conf
 ```cmd
 java -jar ChatServer.jar -i s1 -f /home/ec2-user/servers_conf.txt
 ```
-## Connect to a AWS EC2 instance
+## Connect to an AWS EC2 instance
 
 - Open an SSH client.
 - Locate your private key file. 
@@ -40,3 +40,10 @@ Example:
 Public IPv4 address `Ohio` : `3.134.109.203`
 
 Public IPv4 address `Mumbai` : `13.235.128.78`
+
+```
+s1	3.134.109.203	4445	5555
+s2	3.134.109.203	4446	5556
+s3	13.235.128.78	4447	5557
+s4	13.235.128.78	4448	5558
+```
