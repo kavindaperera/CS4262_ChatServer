@@ -338,6 +338,7 @@ public class ClientHandler extends Thread{
                             doUpdatesWhenDeletingRoom(roomId);
                             informServersRoomDeletion(roomId);
                             clientState.setRoomId(RoomManager.MAINHALL_ID);
+                            clientState.setOwnRoomId("");
                             RoomManager.getLocalRoomsList().get(RoomManager.MAINHALL_ID).getClientHashMap().put(clientState.getClientId(), clientState);
                         }
                         writer.write((response.toJSONString() + "\n").getBytes(StandardCharsets.UTF_8));
