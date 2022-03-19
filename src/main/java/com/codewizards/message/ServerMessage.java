@@ -172,7 +172,7 @@ public class ServerMessage {
         JSONObject informRoomIdDeletion = new JSONObject();
         informRoomIdDeletion.put("type", "deleteroom");
         informRoomIdDeletion.put("serverId", serverId);
-        informRoomIdDeletion.put("roomid", roomId);
+        informRoomIdDeletion.put("roomId", roomId);
         return informRoomIdDeletion;
     }
 

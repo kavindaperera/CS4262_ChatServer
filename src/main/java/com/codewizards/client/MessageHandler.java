@@ -30,13 +30,9 @@ public class MessageHandler {
 
     public static Logger logger = Logger.getLogger(MessageHandler.class.getName());
 
-    //private Disposable idApprovalTimeoutDisposable;
-
-    //private AtomicBoolean isWaitingForIdApproval = new AtomicBoolean(false);
     @Setter
     private boolean isWaitingForIdApproval = false;
 
-    //private AtomicBoolean idApprovalReceived = new AtomicBoolean(false);
     @Setter
     private boolean idApprovalReceived = false;
 
@@ -49,6 +45,7 @@ public class MessageHandler {
 
         if (Utils.validateIdentifier(identity)) {
             if (ClientManager.checkClientIdentityAvailability(identity)) {
+                idApprovalReceived = false;
                 while (!idApprovalReceived) {
                     if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
                         long lastUpdatedTs = ServerState.getInstance().getCoordinatorChangedTs();
@@ -95,6 +92,7 @@ public class MessageHandler {
 
         if (Utils.validateIdentifier(roomId)) {
             if (clientState.getOwnRoomId().equalsIgnoreCase("") && RoomManager.checkRoomIdAvailability(roomId)) {
+                idApprovalReceived = false;
                 while (!idApprovalReceived) {
                     if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
                         long lastUpdatedTs = ServerState.getInstance().getCoordinatorChangedTs();

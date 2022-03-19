@@ -1,8 +1,10 @@
 package com.codewizards.room;
 
+import com.codewizards.client.ClientHandler;
 import com.codewizards.client.ClientState;
 import lombok.Getter;
 import lombok.NonNull;
+import org.apache.log4j.Logger;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -23,6 +25,7 @@ public class Room {
 
     private final ConcurrentHashMap<String, ClientState> clientHashMap = new ConcurrentHashMap<>();
 
+    public static Logger logger = Logger.getLogger(Room.class.getName());
 
     /**
      * used to create ChatRooms
@@ -70,7 +73,7 @@ public class Room {
                         writer = null;
                     }
                 } catch (IOException e) {
-                    System.out.println("Communication Error: " + e.getMessage());
+                    logger.error("Communication Error: " + e.getMessage());
                 }
             }
         }

@@ -185,7 +185,7 @@ public class MessageHandler {
     }
 
     public void respondToInformRoomIdDeletionMessage(JSONObject receivedMessage) {
-        String roomId = (String) receivedMessage.get("serverId");
+        String roomId = (String) receivedMessage.get("roomId");
 
         RoomManager.removeFromGlobalRoomsList(roomId);
     }
