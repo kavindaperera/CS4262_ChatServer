@@ -65,38 +65,47 @@ public class ServerHandler extends Thread{
                     break;
                 }
                 case "requestClientIdApproval": {
+                    logger.debug("Received requestClientIdApproval message from: " + server.getServerId());
                     this.messageHandler.respondToRequestClientIdApprovalMessage(message);
                     break;
                 }
                 case "approveClientId": {
+                    logger.debug("Received approveClientId message from: " + server.getServerId());
                     this.messageHandler.respondToApproveClientIdMessage(message);
                     break;
                 }
                 case "informClientIdCreation": {
+                    logger.debug("Received informClientIdCreation message from: " + server.getServerId());
                     this.messageHandler.respondToInformClientIdCreationMessage(message);
                     break;
                 }
                 case "informClientTransfer": {
+                    logger.debug("Received informClientTransfer message from: " + server.getServerId());
                     this.messageHandler.respondToInformClientTransferMessage(message);
                     break;
                 }
                 case "deleteclient": {
+                    logger.debug("Received deleteclient message from: " + server.getServerId());
                     this.messageHandler.respondToInformClientIdDeletionMessage(message);
                     break;
                 }
                 case "requestRoomIdApproval": {
+                    logger.debug("Received requestRoomIdApproval message from: " + server.getServerId());
                     this.messageHandler.respondToRequestRoomIdApprovalMessage(message);
                     break;
                 }
                 case "approveRoomId": {
+                    logger.debug("Received approveRoomId message from: " + server.getServerId());
                     this.messageHandler.respondToApproveRoomIdMessage(message);
                     break;
                 }
                 case "informRoomIdCreation": {
+                    logger.debug("Received informRoomIdCreation message from: " + server.getServerId());
                     this.messageHandler.respondToInformRoomIdCreationMessage(message);
                     break;
                 }
                 case "deleteroom": {
+                    logger.debug("Received deleteroom message from: " + server.getServerId());
                     this.messageHandler.respondToInformRoomIdDeletionMessage(message);
                     break;
                 }
