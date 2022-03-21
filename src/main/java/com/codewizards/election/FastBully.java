@@ -2,7 +2,6 @@ package com.codewizards.election;
 
 import com.codewizards.Constants;
 import com.codewizards.client.ClientManager;
-import com.codewizards.message.ServerMessage;
 import com.codewizards.room.RoomManager;
 import com.codewizards.server.MessageSender;
 import com.codewizards.server.Server;
@@ -13,10 +12,7 @@ import io.reactivex.observers.DisposableCompletableObserver;
 import lombok.NonNull;
 import org.apache.log4j.Logger;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -156,7 +152,7 @@ public class FastBully {
     }
 
     public void stopViewMessageTimeout() {
-        if (isWaitingForViewMessage.get() && !viewMessageTimeoutDisposable.isDisposed()) {
+        if (isWaitingForViewMessage.get() && viewMessageTimeoutDisposable != null && !viewMessageTimeoutDisposable.isDisposed()) {
             logger.info("View message timeout stopped!");
             isWaitingForViewMessage.set(false);
             viewMessageTimeoutDisposable.dispose();
@@ -320,7 +316,7 @@ public class FastBully {
     }
 
     public synchronized void stopAnswerMessageTimeout() {
-        if (isWaitingForAnswerMessage.get() && !answerMessageTimeoutDisposable.isDisposed()) {
+        if (isWaitingForAnswerMessage.get() && answerMessageTimeoutDisposable != null && !answerMessageTimeoutDisposable.isDisposed()) {
             logger.info("Answer message timeout stopped!");
             isWaitingForAnswerMessage.set(false);
             answerMessageTimeoutDisposable.dispose();
@@ -400,7 +396,7 @@ public class FastBully {
     }
 
     public synchronized void stopCoordinationMessageTimeout() {
-        if (isWaitingForCoordinatorMessage.get() && !coordinatorMessageTimeoutDisposable.isDisposed()) {
+        if (isWaitingForCoordinatorMessage.get() && coordinatorMessageTimeoutDisposable != null && !coordinatorMessageTimeoutDisposable.isDisposed()) {
             logger.info("Coordinator message timeout stopped!");
             isWaitingForCoordinatorMessage.set(false);
             coordinatorMessageTimeoutDisposable.dispose();
@@ -454,7 +450,7 @@ public class FastBully {
     }
 
     public synchronized void stopNominationOrCoordinationMessageTimeout() {
-        if (isWaitingForNominationOrCoordinatorMessage.get() && !nominationOrCoordinationMessageTimeoutDisposable.isDisposed()) {
+        if (isWaitingForNominationOrCoordinatorMessage.get() && nominationOrCoordinationMessageTimeoutDisposable != null && !nominationOrCoordinationMessageTimeoutDisposable.isDisposed()) {
             logger.info("Nomination or Coordinator message timeout stopped!");
             isWaitingForNominationOrCoordinatorMessage.set(false);
             nominationOrCoordinationMessageTimeoutDisposable.dispose();
