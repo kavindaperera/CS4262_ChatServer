@@ -73,6 +73,9 @@ public class MessageHandler {
         logger.info("Received IamUp from " + server.getServerId());
         FastBully.getInstance().sendViewMessage(server);
         ServerState.getInstance().addServerToServerView(server);
+        // Remove previously existed rooms & clients of this server
+        RoomManager.removeRoomsOnFailure(server.getServerId());
+        ClientManager.removeClientsOnFailure(server.getServerId());
         // Add MainHall of the server upon receiving IamUp message
         RoomManager.addToGlobalRoomsList("MainHall-" + server.getServerId(), server.getServerId());
     }
@@ -86,31 +89,37 @@ public class MessageHandler {
         logger.info("processes: " + view);
         logger.info("globalRoomList: " + globalRoomList);
         logger.info("globalClientList: " + globalClientList);
+
         if (FastBully.getInstance().isWaitingForViewMessage()){
             FastBully.getInstance().setViewMessagesReceived(true);
             view.add(server.getServerId());
             ServerState.getInstance().compareAndSetView(view);
 
+            String ownServerId = ServerState.getInstance().getOwnServer().getServerId();
             Iterator<String> clientKeys = globalClientList.keySet().iterator();
             String clientKey;
+            String serverForClient;
             while(clientKeys.hasNext()) {
                 clientKey = clientKeys.next();
-                if (ClientManager.checkClientIdentityAvailability(clientKey)) {
-                    ClientManager.addToGlobalClientsList(clientKey, globalClientList.get(clientKey));
+                serverForClient = globalClientList.get(clientKey);
+                if (ClientManager.checkClientIdentityAvailability(clientKey) && !ownServerId.equalsIgnoreCase(serverForClient)) {
+                    ClientManager.addToGlobalClientsList(clientKey, serverForClient);
                 }
             }
 
             Iterator<String> roomKeys = globalRoomList.keySet().iterator();
             String roomKey;
+            String serverForRoom;
             while(roomKeys.hasNext()) {
                 roomKey = roomKeys.next();
-                if (RoomManager.checkRoomIdAvailability(roomKey)) {
-                    RoomManager.addToGlobalRoomsList(roomKey, globalRoomList.get(roomKey));
+                serverForRoom = globalRoomList.get(roomKey);
+                if (RoomManager.checkRoomIdAvailability(roomKey) && !ownServerId.equalsIgnoreCase(serverForRoom)) {
+                    RoomManager.addToGlobalRoomsList(roomKey, serverForRoom);
                 }
             }
         }
         // Add MainHall of the server upon receiving View message
-        //RoomManager.addToGlobalRoomsList("MainHall-" + server.getServerId(), server.getServerId());
+        RoomManager.addToGlobalRoomsList("MainHall-" + server.getServerId(), server.getServerId());
     }
 
     public void respondToRequestClientIdApprovalMessage(JSONObject receivedMessage) throws InterruptedException {

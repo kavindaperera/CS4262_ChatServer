@@ -1,6 +1,9 @@
 package com.codewizards.election;
 
 import com.codewizards.Constants;
+import com.codewizards.client.ClientManager;
+import com.codewizards.message.ServerMessage;
+import com.codewizards.room.RoomManager;
 import com.codewizards.server.MessageSender;
 import com.codewizards.server.Server;
 import com.codewizards.server.ServerState;
@@ -10,7 +13,10 @@ import io.reactivex.observers.DisposableCompletableObserver;
 import lombok.NonNull;
 import org.apache.log4j.Logger;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -186,7 +192,8 @@ public class FastBully {
                 ServerState.getInstance().setCoordinator(coordinator);
             } else { // already the coordinator
                 logger.info(coordinator.getServerId() + " is already the coordinator");
-                // do nothing
+                // TODO - do nothing
+                RoomManager.addToGlobalRoomsList("MainHall-" + coordinator.getServerId(), coordinator.getServerId());
             }
 
             startHeartbeatWaitTimeout();
@@ -456,7 +463,21 @@ public class FastBully {
 
     private void handleLeaderHeartbeatFailure() {
         logger.info("Leader is down!");
-        //TODO - handle failure
+        ServerState.getInstance().removeServerFromServerView(ServerState.getInstance().getCoordinator());
+        String leaderId = ServerState.getInstance().getCoordinator().getServerId();
+        // self update rooms & clients
+        ClientManager.removeClientsOnFailure(leaderId);
+        RoomManager.removeRoomsOnFailure(leaderId);
+        for (Server server : ServerState.getInstance().getServerViewAsServerArrayList()) {
+            if (!server.equals(ServerState.getInstance().getCoordinator())) {
+                try {
+                    logger.info("Send informServerFailure to: " + server.getServerId());
+                    MessageSender.sendInformServerFailureMessage(server, leaderId);
+                } catch (IOException e) {
+                    logger.error(e.getLocalizedMessage() + ": " + server.getServerId());
+                }
+            }
+        }
     }
 
 }
