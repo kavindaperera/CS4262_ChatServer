@@ -45,6 +45,7 @@ public class MessageHandler {
 
         if (Utils.validateIdentifier(identity)) {
             if (ClientManager.checkClientIdentityAvailability(identity)) {
+                while (ServerState.getInstance().getCoordinator() == null) {}
                 idApprovalReceived = false;
                 while (!idApprovalReceived) {
                     if (!ServerState.getInstance().getOwnServer().equals(ServerState.getInstance().getCoordinator())) {
