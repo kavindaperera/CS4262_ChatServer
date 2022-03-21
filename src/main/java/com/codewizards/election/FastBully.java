@@ -192,7 +192,8 @@ public class FastBully {
                 ServerState.getInstance().setCoordinator(coordinator);
             } else { // already the coordinator
                 logger.info(coordinator.getServerId() + " is already the coordinator");
-                // do nothing
+                // TODO - do nothing
+                RoomManager.addToGlobalRoomsList("MainHall-" + coordinator.getServerId(), coordinator.getServerId());
             }
 
             startHeartbeatWaitTimeout();
