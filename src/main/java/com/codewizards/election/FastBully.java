@@ -206,9 +206,10 @@ public class FastBully {
                                    @Override
                                    public void onComplete() {
                                        logger.info("Heartbeat wait timeout completed!");
+                                       FastBully.getInstance().handleLeaderHeartbeatFailure();
                                        logger.info("Leader heartbeat failure, Starting election");
-                                       startElection();
-                                       stopHeartbeatWaitTimeout();
+                                       FastBully.getInstance().startElection();
+                                       FastBully.getInstance().stopHeartbeatWaitTimeout();
                                    }
 
                                    @Override
@@ -452,4 +453,10 @@ public class FastBully {
             nominationOrCoordinationMessageTimeoutDisposable.dispose();
         }
     }
+
+    private void handleLeaderHeartbeatFailure() {
+        logger.info("Leader is down!");
+        //TODO - handle failure
+    }
+
 }
