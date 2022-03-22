@@ -364,8 +364,14 @@ public class ClientHandler extends Thread{
             logger.error("Connection Error: " + e.getMessage());
             doUpdatesWhenQuiting();
             ClientManager.removeFromClientHandlerList(clientState.getClientId());
+        } catch (NullPointerException e) {
+            logger.error("NullPointerException Error: " + e.getMessage());
+            doUpdatesWhenQuiting();
+            ClientManager.removeFromClientHandlerList(clientState.getClientId());
         } catch (IOException e) {
             logger.error("Communication Error: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error: " + e.getMessage());
         }
     }
 
