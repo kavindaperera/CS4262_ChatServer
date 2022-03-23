@@ -68,6 +68,7 @@ public class Main {
         while (true) {
             try {
                 Socket socket = clientSocket.accept();
+                socket.setSoTimeout(Constants.SOCKET_TIMEOUT);
                 logger.debug("Client Connected.....");
                 ClientHandler clientHandler = new ClientHandler(socket);
                 clientHandler.start();

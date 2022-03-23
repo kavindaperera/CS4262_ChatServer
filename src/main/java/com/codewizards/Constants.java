@@ -5,6 +5,7 @@ import lombok.NonNull;
 public class Constants {
 
     // timeouts in milliseconds
+    public static final int SOCKET_TIMEOUT = 60000;
     public static final long VIEW_MESSAGE_TIMEOUT = 6000L;              // T2
     public static final long ANSWER_MESSAGE_TIMEOUT = 6000L;            // T2
     public static final long COORDINATOR_MESSAGE_TIMEOUT = 7000L;       // T3
