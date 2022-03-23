@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -360,6 +361,10 @@ public class ClientHandler extends Thread{
             }
         } catch (ParseException e) {
             logger.error("Message Error: " + e.getMessage());
+        } catch (SocketTimeoutException e) {
+            logger.error("Connection Error: " + e.getMessage());
+            doUpdatesWhenQuiting();
+            ClientManager.removeFromClientHandlerList(clientState.getClientId());
         } catch (SocketException e) {
             logger.error("Connection Error: " + e.getMessage());
             doUpdatesWhenQuiting();
